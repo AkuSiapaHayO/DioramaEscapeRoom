@@ -29,7 +29,7 @@ struct InGameView: View {
     var body: some View {
         SceneView(
             scene: scene,
-            options: [.autoenablesDefaultLighting]
+            options: []
         )
         .gesture(
             DragGesture()
@@ -51,6 +51,8 @@ struct InGameView: View {
                 if let roomNode = loadedScene.rootNode.childNode(withName: "root", recursively: true) {
                     roomNode.eulerAngles = SCNVector3(x: -Float.pi / 2, y: 0, z: 0)
                 }
+                
+//                loadedScene.lightingEnvironment.contents = nil // Disable environment lighting
 
                 //Camera setting
                 let camera = SCNCamera()

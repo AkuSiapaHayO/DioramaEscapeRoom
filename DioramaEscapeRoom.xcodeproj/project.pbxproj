@@ -11,11 +11,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		663F9EEF2E03A1C900A67B44 /* Preview Content */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
 		BFFB68972DFFC48800587376 /* DioramaEscapeRoom */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DioramaEscapeRoom;
@@ -34,12 +29,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A68307462E03F811000C7A9D /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
 		BFFB688C2DFFC48800587376 = {
 			isa = PBXGroup;
 			children = (
 				BFFB68972DFFC48800587376 /* DioramaEscapeRoom */,
 				BF6514E92E030A0600599DB8 /* DioramaEscapeRoom.app */,
-				663F9EEF2E03A1C900A67B44 /* Preview Content */,
+				A68307462E03F811000C7A9D /* Preview Content */,
 			);
 			sourceTree = "<group>";
 		};
@@ -59,7 +61,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				663F9EEF2E03A1C900A67B44 /* Preview Content */,
 				BFFB68972DFFC48800587376 /* DioramaEscapeRoom */,
 			);
 			name = DioramaEscapeRoom;
@@ -250,7 +251,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"DioramaEscapeRoom/Preview Content\"";
 				DEVELOPMENT_TEAM = 9QV95FA5Z5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -279,7 +279,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"DioramaEscapeRoom/Preview Content\"";
 				DEVELOPMENT_TEAM = 9QV95FA5Z5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
