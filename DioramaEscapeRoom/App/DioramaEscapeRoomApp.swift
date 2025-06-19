@@ -9,9 +9,10 @@ import SwiftUI
 
 @main
 struct DioramaEscapeRoomApp: App {
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainMenuView()
         }
     }
 }

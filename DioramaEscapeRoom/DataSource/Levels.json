@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "name": "Tutorial Room",
+        "sceneFile": "Level1.scn",
+        "mainMenuHiddenItems": ["Wall_1", "Wall_2"]
+    },
+    {
+        "id": 2,
+        "name": "Science Lab",
+        "sceneFile": "Level2.scn",
+        "mainMenuHiddenItems": []
+    }
+]

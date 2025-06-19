@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		BFFB68952DFFC48800587376 /* DioramaEscapeRoom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = DioramaEscapeRoom.app; path = "/Users/louis/Documents/Apple Developer Academy/Challenge4/DioramaEscapeRoom/build/Debug-iphoneos/DioramaEscapeRoom.app"; sourceTree = "<absolute>"; };
+		BF6514E92E030A0600599DB8 /* DioramaEscapeRoom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DioramaEscapeRoom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +33,7 @@
 			isa = PBXGroup;
 			children = (
 				BFFB68972DFFC48800587376 /* DioramaEscapeRoom */,
+				BF6514E92E030A0600599DB8 /* DioramaEscapeRoom.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,7 +59,7 @@
 			packageProductDependencies = (
 			);
 			productName = DioramaEscapeRoom;
-			productReference = BFFB68952DFFC48800587376 /* DioramaEscapeRoom.app */;
+			productReference = BF6514E92E030A0600599DB8 /* DioramaEscapeRoom.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
