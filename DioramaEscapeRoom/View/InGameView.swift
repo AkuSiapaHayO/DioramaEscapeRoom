@@ -184,63 +184,110 @@ struct InGameView: View {
     
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
-        zoomToPoint(nodePosition)
+        
+        // Get the bounding box to understand the object's size
+        let (min, max) = node.boundingBox
+        let size = SCNVector3(
+            x: max.x - min.x,
+            y: max.y - min.y,
+            z: max.z - min.z
+        )
+        
+        // Calculate appropriate distance based on object size
+        let maxDimension = Swift.max(Swift.max(size.x, size.y), size.z)
+        let distance = Swift.max(maxDimension * 2.5, 3.0) // Minimum distance of 3 units
+        
+        // Special case for Cabinet_1 - move camera up by 1 unit on Y-axis
+        var adjustedPosition = nodePosition
+        if node.name == "Cabinet_1" {
+            adjustedPosition.y += 1.0
+            print("Special handling for Cabinet_1: Moving camera up by 1 unit")
+        }
+        
+        zoomToPoint(adjustedPosition, distance: distance, nodeName: node.name)
     }
-    
-    private func zoomToPoint(_ point: SCNVector3) {
+
+    // Updated zoomToPoint to accept node name for special handling
+    private func zoomToPoint(_ point: SCNVector3, distance: Float = 3.0, nodeName: String? = nil) {
         guard let cameraNode = cameraNode else { return }
         
         print("Zooming to point: \(point)")
         
-        // Calculate a good camera position relative to the target point
-        let offset = SCNVector3(x: 0, y: 1, z: 3) // Move camera back and slightly up
-        let newCameraPosition = SCNVector3(
-            x: point.x + offset.x,
-            y: point.y + offset.y,
-            z: point.z + offset.z
+        // Calculate camera position in front of the object
+        let currentPosition = cameraNode.position
+        let currentTarget = SCNVector3(0, 0.9, 0) // Current look-at point
+        
+        // Calculate direction from current camera to current target
+        var direction = SCNVector3(
+            x: currentTarget.x - currentPosition.x,
+            y: currentTarget.y - currentPosition.y,
+            z: currentTarget.z - currentPosition.z
         )
+        
+        // Normalize the direction
+        let length = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z)
+        if length > 0 {
+            direction.x /= length
+            direction.y /= length
+            direction.z /= length
+        }
+        
+        // Position camera in front of the target object
+        var newCameraPosition = SCNVector3(
+            x: point.x - direction.x * distance,
+            y: point.y - direction.y * distance + 0.5, // Slightly above for better viewing angle
+            z: point.z - direction.z * distance
+        )
+        
+        // Special adjustment for Cabinet_1 - move camera higher for better view
+        if nodeName == "Cabinet_1" {
+            newCameraPosition.y += 0.5 // Additional height adjustment for cabinet viewing
+            print("Additional camera height adjustment for Cabinet_1")
+        }
         
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
-        // Animate camera to new position
-        let moveAction = SCNAction.move(to: newCameraPosition, duration: 1.0)
+        // Create smooth animations
+        let moveAction = SCNAction.move(to: newCameraPosition, duration: 1.5)
         moveAction.timingMode = .easeInEaseOut
         
-        // Create look-at action
-        let lookAtAction = SCNAction.run { _ in
+        // Execute the animation
+        cameraNode.runAction(moveAction) {
+            // After movement, ensure we're looking at the target
             cameraNode.look(at: point)
-        }
-        
-        let zoomSequence = SCNAction.sequence([
-            SCNAction.group([moveAction]),
-            lookAtAction
-        ])
-        
-        cameraNode.runAction(zoomSequence) {
             DispatchQueue.main.async {
                 print("Zoom completed")
                 self.isZoomedIn = true
             }
         }
     }
-    
+
     private func zoomOut() {
         guard let cameraNode = cameraNode else { return }
         
         print("Zooming out to original position: \(originalCameraPosition)")
         
-        // Animate back to original position
-        let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.0)
+        // Create smooth move animation
+        let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.5)
         moveAction.timingMode = .easeInEaseOut
         
-        // Restore original euler angles (more reliable than rotation)
+        // Create smooth rotation animation back to original orientation
         let rotateAction = SCNAction.run { _ in
+            // Gradually restore original orientation
+            let tempNode = SCNNode()
+            tempNode.position = self.originalCameraPosition
+            tempNode.look(at: SCNVector3(0, 0.9, 0))
+            cameraNode.eulerAngles = tempNode.eulerAngles
+        }
+        
+        // Alternative: Use the stored original euler angles
+        let restoreOrientationAction = SCNAction.run { _ in
             cameraNode.eulerAngles = self.originalCameraEulerAngles
         }
         
         let zoomOutSequence = SCNAction.sequence([
             SCNAction.group([moveAction]),
-            rotateAction
+            restoreOrientationAction
         ])
         
         cameraNode.runAction(zoomOutSequence) {
@@ -249,6 +296,23 @@ struct InGameView: View {
                 self.isZoomedIn = false
             }
         }
+    }
+
+    // Helper function to calculate better camera positioning
+    private func calculateOptimalCameraPosition(for targetPoint: SCNVector3, objectSize: SCNVector3) -> SCNVector3 {
+        // Calculate the maximum dimension of the object
+        let maxDimension = Swift.max(Swift.max(objectSize.x, objectSize.y), objectSize.z)
+        
+        // Calculate distance based on camera's field of view and object size
+        let fov = cameraNode?.camera?.fieldOfView ?? 60.0
+        let distance = maxDimension / (2.0 * tan(Float(fov * .pi / 180.0) / 2.0)) * 1.5
+        
+        // Position camera in front of the object (assuming object faces toward negative Z)
+        return SCNVector3(
+            x: targetPoint.x,
+            y: targetPoint.y + maxDimension * 0.2, // Slightly above for better angle
+            z: targetPoint.z + Swift.max(distance, 2.0) // Minimum distance
+        )
     }
 }
 
