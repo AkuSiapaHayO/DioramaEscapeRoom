@@ -12,4 +12,5 @@ struct Level: Identifiable, Codable, Hashable {
     var name: String
     var sceneFile: String
     var mainMenuHiddenItems: [String]?
+    var inGameHiddenItems: [String: [String]]?
 }

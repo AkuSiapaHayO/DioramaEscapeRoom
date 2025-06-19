@@ -11,6 +11,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		663F9EEF2E03A1C900A67B44 /* Preview Content */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
 		BFFB68972DFFC48800587376 /* DioramaEscapeRoom */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DioramaEscapeRoom;
@@ -34,6 +39,7 @@
 			children = (
 				BFFB68972DFFC48800587376 /* DioramaEscapeRoom */,
 				BF6514E92E030A0600599DB8 /* DioramaEscapeRoom.app */,
+				663F9EEF2E03A1C900A67B44 /* Preview Content */,
 			);
 			sourceTree = "<group>";
 		};
@@ -53,6 +59,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				663F9EEF2E03A1C900A67B44 /* Preview Content */,
 				BFFB68972DFFC48800587376 /* DioramaEscapeRoom */,
 			);
 			name = DioramaEscapeRoom;
@@ -244,7 +251,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DioramaEscapeRoom/Preview Content\"";
-				DEVELOPMENT_TEAM = ZP3PVD4P6P;
+				DEVELOPMENT_TEAM = 9QV95FA5Z5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -273,7 +280,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DioramaEscapeRoom/Preview Content\"";
-				DEVELOPMENT_TEAM = ZP3PVD4P6P;
+				DEVELOPMENT_TEAM = 9QV95FA5Z5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
