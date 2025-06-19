@@ -15,52 +15,67 @@ struct MainMenuView: View {
     
     var body: some View {
         NavigationStack() {
-            VStack {
-                Text("Escape Room")
-                    .font(.title)
-                    .padding(.top, 16)
-                    .foregroundStyle(.gray)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
-                        ForEach(levels) { level in
-                            VStack {
-                                LevelViewComponent(level: level)
+            ZStack {
+                GradientBackground()
+                    .ignoresSafeArea()
+                Image("BG 1")
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.2)
+                    .blur(radius: 8)
+                    .ignoresSafeArea()
+                VStack {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 20) {
+                            ForEach(levels) { level in
+                                HStack {
+                                    LevelViewComponent(level: level)
+                                    VStack(alignment: .leading) {
+                                        Text("Level \(level.id)")
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 20, weight: .light, design: .default))
+                                        
+                                        Text(level.name)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 36, weight: .bold, design: .default))
+                                        
+                                        if let focused = focusedLevel {
+                                            NavigationLink(value: focused) {
+                                                Text("Play")
+                                                    .font(.system(size: 14))
+                                                    .padding(.vertical, 8)
+                                                    .padding(.horizontal, 44)
+                                                    .background(Color.white)
+                                                    .foregroundColor(Color(hex: "044948"))
+                                                    .cornerRadius(20)
+                                            }
+                                            .padding(.top, -12)
+                                        }
+                                    }
+                                    .padding(.leading, 24)
+                                }
+                                .padding()
+                                .containerRelativeFrame(.horizontal, count: 1, spacing: 16)
+                                .id(level)
                             }
-                            .padding()
-                            .containerRelativeFrame(.horizontal, count: 1, spacing: 16)
-                            .id(level)
                         }
+                        .scrollTargetLayout()
                     }
-                    .scrollTargetLayout()
+                    .scrollTargetBehavior(.viewAligned)
+                    .scrollPosition(id: $focusedLevel)
+                    
                 }
-                .scrollTargetBehavior(.viewAligned)
-                .scrollPosition(id: $focusedLevel)
-                
-                
-                if let focused = focusedLevel {
-                    NavigationLink(value: focused) {
-                        Text("Play")
-                            .font(.headline)
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 32)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear {
+                    let loaded = LevelLoader.loadLevels()
+                    self.levels = loaded
+                    DispatchQueue.main.async {
+                        self.focusedLevel = loaded.first
                     }
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.white)
-            .onAppear {
-                let loaded = LevelLoader.loadLevels()
-                self.levels = loaded
-                DispatchQueue.main.async {
-                    self.focusedLevel = loaded.first
+                .navigationDestination(for: Level.self) { level in
+                    InGameView(level: level)
                 }
-            }
-            .navigationDestination(for: Level.self) { level in
-                InGameView(level: level)
             }
         }
     }

@@ -1,7 +1,7 @@
 [
     {
         "id": 1,
-        "name": "Tutorial Room",
+        "name": "The Mad Scientist",
         "sceneFile": "Level1.scn",
         "mainMenuHiddenItems": ["Wall_2", "Wall_3"],
         "inGameHiddenItems": {
@@ -13,8 +13,8 @@
     },
     {
         "id": 2,
-        "name": "Science Lab",
-        "sceneFile": "Level2.scn",
+        "name": "Yobelito Assasino",
+        "sceneFile": "Level1.scn",
         "mainMenuHiddenItems": []
     }
 ]
