@@ -15,14 +15,10 @@ struct MainMenuView: View {
     
     var body: some View {
         NavigationStack() {
-            
             VStack {
-                Text("Diorama")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.black)
                 Text("Escape Room")
                     .font(.title)
+                    .padding(.top, 16)
                     .foregroundStyle(.gray)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -30,7 +26,6 @@ struct MainMenuView: View {
                         ForEach(levels) { level in
                             VStack {
                                 LevelViewComponent(level: level)
-                                
                             }
                             .padding()
                             .containerRelativeFrame(.horizontal, count: 1, spacing: 16)
@@ -53,7 +48,6 @@ struct MainMenuView: View {
                             .foregroundColor(.white)
                             .cornerRadius(12)
                     }
-                    .padding(.top, 16)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -61,7 +55,9 @@ struct MainMenuView: View {
             .onAppear {
                 let loaded = LevelLoader.loadLevels()
                 self.levels = loaded
-                self.focusedLevel = loaded.first
+                DispatchQueue.main.async {
+                    self.focusedLevel = loaded.first
+                }
             }
             .navigationDestination(for: Level.self) { level in
                 InGameView(level: level)

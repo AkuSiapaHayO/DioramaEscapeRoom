@@ -44,6 +44,7 @@ struct InGameView: View {
                 }
         )
         .onAppear {
+            //Room Setting
             if scene == nil {
                 let loadedScene = SCNScene(named: level.sceneFile) ?? SCNScene()
 
@@ -51,28 +52,25 @@ struct InGameView: View {
                     roomNode.eulerAngles = SCNVector3(x: -Float.pi / 2, y: 0, z: 0)
                 }
 
-                // Sembunyikan objek dari main menu jika ada
-                if let hiddenItems = level.mainMenuHiddenItems {
-                    for name in hiddenItems {
-                        if let nodeToHide = loadedScene.rootNode.childNode(withName: name, recursively: true) {
-                            nodeToHide.isHidden = true
-                        }
-                    }
-                }
-
-                // Tambah kamera
+                //Camera setting
                 let camera = SCNCamera()
+                camera.usesOrthographicProjection = true
+                camera.orthographicScale = 2.1  // makin besar, makin zoom out
+                camera.zNear = 1
+                camera.zFar = 100
+
                 let cameraNode = SCNNode()
                 cameraNode.camera = camera
-                cameraNode.position = SCNVector3(x: 4.5, y: 2, z: 4.5)
-                cameraNode.look(at: SCNVector3(0, 0.6, 0))
+                cameraNode.position = SCNVector3(x: 2, y: 2.5, z: 2)
+                cameraNode.look(at: SCNVector3(0, 1, 0))
                 loadedScene.rootNode.addChildNode(cameraNode)
 
-                // Konversi inGameHiddenItems dari [String: [String]] ke [Int: [String]]
                 let intHiddenConfig = level.inGameHiddenItems?.compactMapKeys { Int($0) } ?? [:]
 
                 self.scene = loadedScene
                 self.rotationManager = RoomRotationManager(scene: loadedScene, hiddenWallConfig: intHiddenConfig)
+                self.rotationManager?.updateWallsVisibility()
+
             }
         }
         .ignoresSafeArea(.all)

@@ -11,6 +11,7 @@ class RoomRotationManager: ObservableObject {
     private let roomNode: SCNNode
     private let pivotNode: SCNNode
     private var currentAngle: Float = 0.0
+    private let initialYAngle: Float
     private let hiddenWallConfig: [Int: [String]]
 
     init?(scene: SCNScene, hiddenWallConfig: [Int: [String]]) {
@@ -20,6 +21,8 @@ class RoomRotationManager: ObservableObject {
 
         self.roomNode = roomNode
         self.hiddenWallConfig = hiddenWallConfig
+        self.initialYAngle = roomNode.eulerAngles.y
+        self.currentAngle = 0
 
         pivotNode = SCNNode()
         pivotNode.position = SCNVector3(0, 0, 0)
@@ -50,9 +53,13 @@ class RoomRotationManager: ObservableObject {
         SCNTransaction.commit()
     }
 
-    private func updateWallsVisibility() {
-        let rawAngle = round(currentAngle / (.pi / 2)) * 90
-        let degree = ((Int(rawAngle) % 360) + 360) % 360 // Normalisasi ke 0–359
+    public func updateWallsVisibility() {
+        let absoluteY = currentAngle + initialYAngle
+
+        // Hitung derajat relatif terhadap sudut awal
+        let rawAngle = round(absoluteY / (.pi / 2)) * 90
+        let degree = ((Int(rawAngle) % 360) + 360) % 360
+
         let hiddenNames = hiddenWallConfig[degree] ?? []
 
         roomNode.enumerateChildNodes { node, _ in
