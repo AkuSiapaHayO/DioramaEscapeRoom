@@ -39,13 +39,13 @@ struct LevelViewComponent: View {
                     let camera = SCNCamera()
                     let cameraNode = SCNNode()
                     cameraNode.camera = camera
-                    cameraNode.position = SCNVector3(x: 2.2, y: 1, z: 2.2)
+                    cameraNode.position = SCNVector3(x: 2.2, y: 2.5, z: 2.2)
                     cameraNode.look(at: SCNVector3(0, 0.6, 0))
                     scene.rootNode.addChildNode(cameraNode)
 
                     return scene
                 }(),
-                options: [.autoenablesDefaultLighting]
+                options: []
             )
             .frame(width: 300, height: 200) // ⬅️ Tambahkan ukuran tetap
             .background(Color.gray.opacity(0.1)) // Opsional, bantu debug layout
