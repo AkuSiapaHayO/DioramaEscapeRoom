@@ -88,10 +88,33 @@ struct FocusObjectView: View {
         
         let rotation1: Set<String> = [
             "Willas___Hayya",
+            "Paper_2",
+            "Paper_1",
+            "Photo_4",
         ]
         let rotation2: Set<String> = [
             "Periodic_Table",
-            
+            "Blue_Book_1",
+            "Blue_Book_3",
+            "Green_Book_1",
+            "Green_Book_2",
+            "Green_Book_3",
+            "Red_Book",
+            "Red_Book_1",
+            "Red_Book_3",
+            "Photo_2",
+            "Science_Poster",
+        ]
+        let rotation3: Set<String> = [
+            "Calendar",
+        ]
+        let rotation4: Set<String> = [
+            "Locker_1",
+            "Locker_2",
+            "Locker_3",
+            "Lock_1",
+            "Lock_2",
+            "Lock_3"
         ]
 
         print("=== Scene Node Hierarchy ===")
@@ -110,7 +133,11 @@ struct FocusObjectView: View {
             objectNode.eulerAngles = SCNVector3Zero
         } else if rotation2.contains(nodeName) {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 4.6, z: .pi)
-        } else {
+        } else if rotation3.contains(nodeName){ objectNode.eulerAngles = SCNVector3(x: .pi, y: 0, z: .pi)
+        } else if rotation4.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: .pi/2, y: .pi, z: .pi)
+        }
+        else {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         }
         
@@ -179,5 +206,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Calendar")
+    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Locker_1")
 }

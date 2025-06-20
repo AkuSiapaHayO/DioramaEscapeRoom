@@ -227,8 +227,8 @@ struct InGameView: View {
         
         // Camera setting
         let camera = SCNCamera()
-        camera.zNear = 1
-        camera.zFar = 200
+        camera.zNear = 0.01
+        camera.zFar = 100
         camera.focalLength = 120
         camera.fStop = 1.8
         camera.focusDistance = 3
