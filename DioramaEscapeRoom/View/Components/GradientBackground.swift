@@ -13,15 +13,10 @@ struct GradientBackground: View {
     var body: some View {
         LinearGradient(
             gradient: Gradient(colors: [Color(hex: "00D4DF"), Color(hex: "044948")]),
-            startPoint: animate ? .topLeading : .bottomLeading,
-            endPoint: animate ? .bottomTrailing  : .bottomTrailing
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
         )
         .ignoresSafeArea()
-        .animation(
-            Animation.easeInOut(duration: 1.0)
-                .repeatForever(autoreverses: true),
-            value: animate
-        )
         .onAppear {
             animate = true
         }

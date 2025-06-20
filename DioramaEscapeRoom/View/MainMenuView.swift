@@ -21,10 +21,16 @@ struct MainMenuView: View {
                 Image("BG 1")
                     .resizable()
                     .scaledToFill()
-                    .opacity(0.2)
-                    .blur(radius: 8)
+                    .opacity(0.3)
+                    .blur(radius: 5)
                     .ignoresSafeArea()
                 VStack {
+                    HStack{
+                        Image("LockedIn Logo")
+                            .resizable()
+                            .frame(width: 100, height: 40)
+                        Spacer()
+                    }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 20) {
                             ForEach(levels) { level in
