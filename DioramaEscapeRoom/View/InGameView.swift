@@ -29,10 +29,13 @@ struct InGameView: View {
     @State private var initialOrbitalAngleHorizontal: Float = 0.0
     
     // Constants for limiting rotation
-    let horizontalRotationLimit: Float = 25.0 * (.pi / 180.0) // 25 degrees in radians
+    let horizontalRotationLimit: Float = 25.0 * (.pi / 180.0)
     
     var body: some View {
         ZStack {
+            Color.white // ✅ White background
+                .ignoresSafeArea()
+            
             InteractiveSceneView(scene: scene) { tappedNode in
                 guard !isZoomedIn else { return }
                 print("Tapped node: \(tappedNode.name ?? "Unnamed")")
@@ -111,6 +114,15 @@ struct InGameView: View {
                 }
                 .padding()
             }
+            
+            VStack {
+                HStack {
+                    ExitButtonComponent()
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding()
         }
         .onAppear {
             setupScene()
@@ -123,11 +135,11 @@ struct InGameView: View {
         guard scene == nil else { return }
         
         let loadedScene = SCNScene(named: level.sceneFile) ?? SCNScene()
-
+        
         if let roomNode = loadedScene.rootNode.childNode(withName: "root", recursively: true) {
             roomNode.eulerAngles = SCNVector3(x: -Float.pi / 2, y: 0, z: 0)
         }
-
+        
         // Camera setting
         let camera = SCNCamera()
         camera.zNear = 1
@@ -135,7 +147,7 @@ struct InGameView: View {
         camera.focalLength = 120
         camera.fStop = 1.8
         camera.focusDistance = 3
-
+        
         let cameraNode = SCNNode()
         cameraNode.camera = camera
         cameraNode.position = originalCameraPosition
@@ -145,9 +157,9 @@ struct InGameView: View {
         originalCameraEulerAngles = cameraNode.eulerAngles
         
         loadedScene.rootNode.addChildNode(cameraNode)
-
+        
         let intHiddenConfig = level.inGameHiddenItems?.compactMapKeys { Int($0) } ?? [:]
-
+        
         self.scene = loadedScene
         self.cameraNode = cameraNode
         self.rotationManager = RoomRotationManager(scene: loadedScene, hiddenWallConfig: intHiddenConfig)
@@ -205,6 +217,13 @@ struct InGameView: View {
         return nil
     }
     
+    private func zoomToZone(_ zone: InteractionZone) {
+        var zoomPosition = zone.centerPosition
+        zoomPosition.y += zone.heightOffset
+        
+        zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
+    }
+
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -229,7 +248,6 @@ struct InGameView: View {
         
         zoomToPoint(adjustedPosition, distance: distance, nodeName: node.name)
     }
-
     // Updated zoomToPoint to set up orbital camera
     private func zoomToPoint(_ point: SCNVector3, distance: Float = 3.0, nodeName: String? = nil) {
         guard let cameraNode = cameraNode else { return }
@@ -320,7 +338,7 @@ struct InGameView: View {
             }
         }
     }
-
+    
     private func zoomOut() {
         guard let cameraNode = cameraNode else { return }
         
