@@ -18,9 +18,12 @@ struct InGameView: View {
     @State private var originalCameraEulerAngles: SCNVector3 = SCNVector3()
     @State private var isZoomedIn: Bool = false
     @State private var interactionZones: [InteractionZone] = []
-
+    
     var body: some View {
         ZStack {
+            Color.white // ✅ White background
+                .ignoresSafeArea()
+            
             InteractiveSceneView(scene: scene) { tappedNode in
                 guard !isZoomedIn else { return }
                 print("Tapped node: \(tappedNode.name ?? "Unnamed")")
@@ -59,6 +62,15 @@ struct InGameView: View {
                 }
                 .padding()
             }
+            
+            VStack {
+                HStack {
+                    ExitButtonComponent()
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding()
         }
         .onAppear {
             setupScene()
@@ -71,11 +83,11 @@ struct InGameView: View {
         guard scene == nil else { return }
         
         let loadedScene = SCNScene(named: level.sceneFile) ?? SCNScene()
-
+        
         if let roomNode = loadedScene.rootNode.childNode(withName: "root", recursively: true) {
             roomNode.eulerAngles = SCNVector3(x: -Float.pi / 2, y: 0, z: 0)
         }
-
+        
         // Camera setting
         let camera = SCNCamera()
         camera.zNear = 1
@@ -83,7 +95,7 @@ struct InGameView: View {
         camera.focalLength = 100
         camera.fStop = 1.8
         camera.focusDistance = 3
-
+        
         let cameraNode = SCNNode()
         cameraNode.camera = camera
         cameraNode.position = originalCameraPosition
@@ -93,9 +105,9 @@ struct InGameView: View {
         originalCameraEulerAngles = cameraNode.eulerAngles
         
         loadedScene.rootNode.addChildNode(cameraNode)
-
+        
         let intHiddenConfig = level.inGameHiddenItems?.compactMapKeys { Int($0) } ?? [:]
-
+        
         self.scene = loadedScene
         self.cameraNode = cameraNode
         self.rotationManager = RoomRotationManager(scene: loadedScene, hiddenWallConfig: intHiddenConfig)
@@ -128,22 +140,22 @@ struct InGameView: View {
         // Method 2: Manually define zones if you don't have empty nodes
         // Uncomment and customize these if you want to manually define zones
         /*
-        zones.append(InteractionZone(
-            name: "Cabinet Area",
-            centerPosition: SCNVector3(x: 2, y: 0, z: 2),
-            radius: 2.5,
-            zoomDistance: 4.0,
-            heightOffset: 1.0
-        ))
-        
-        zones.append(InteractionZone(
-            name: "Periodic Table Area",
-            centerPosition: SCNVector3(x: -2, y: 0, z: -2),
-            radius: 2.0,
-            zoomDistance: 3.0,
-            heightOffset: 0.5
-        ))
-        */
+         zones.append(InteractionZone(
+         name: "Cabinet Area",
+         centerPosition: SCNVector3(x: 2, y: 0, z: 2),
+         radius: 2.5,
+         zoomDistance: 4.0,
+         heightOffset: 1.0
+         ))
+         
+         zones.append(InteractionZone(
+         name: "Periodic Table Area",
+         centerPosition: SCNVector3(x: -2, y: 0, z: -2),
+         radius: 2.0,
+         zoomDistance: 3.0,
+         heightOffset: 0.5
+         ))
+         */
         
         self.interactionZones = zones
         print("Setup \(zones.count) interaction zones")
@@ -246,7 +258,7 @@ struct InGameView: View {
         
         zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
     }
-
+    
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -271,7 +283,7 @@ struct InGameView: View {
         
         zoomToPoint(adjustedPosition, distance: distance, nodeName: node.name)
     }
-
+    
     // Updated zoomToPoint to accept node name for special handling
     private func zoomToPoint(_ point: SCNVector3, distance: Float = 3.0, nodeName: String? = nil) {
         guard let cameraNode = cameraNode else { return }
@@ -320,7 +332,7 @@ struct InGameView: View {
             }
         }
     }
-
+    
     private func zoomOut() {
         guard let cameraNode = cameraNode else { return }
         
