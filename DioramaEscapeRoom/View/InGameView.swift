@@ -11,13 +11,25 @@ import SceneKit
 struct InGameView: View {
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
+    @State private var lastDragTranslationY: CGFloat = 0.0
     @State private var rotationManager: RoomRotationManager? = nil
     @State private var scene: SCNScene? = nil
     @State private var cameraNode: SCNNode? = nil
-    @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 10, y: 7, z: 10)
+    @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 12, y: 8, z: 12)
     @State private var originalCameraEulerAngles: SCNVector3 = SCNVector3()
     @State private var isZoomedIn: Bool = false
-    @State private var interactionZones: [InteractionZone] = []
+    
+    // Orbital camera properties
+    @State private var orbitalRadius: Float = 3.0
+    @State private var orbitalAngleHorizontal: Float = 0.0
+    @State private var orbitalAngleVertical: Float = 0.0
+    @State private var orbitalTarget: SCNVector3 = SCNVector3(0, 0, 0)
+    
+    // New state to store the initial horizontal angle when zoomed in
+    @State private var initialOrbitalAngleHorizontal: Float = 0.0
+    
+    // Constants for limiting rotation
+    let horizontalRotationLimit: Float = 25.0 * (.pi / 180.0)
     
     var body: some View {
         ZStack {
@@ -27,21 +39,61 @@ struct InGameView: View {
             InteractiveSceneView(scene: scene) { tappedNode in
                 guard !isZoomedIn else { return }
                 print("Tapped node: \(tappedNode.name ?? "Unnamed")")
-                handleNodeTap(tappedNode)
+                zoomToNode(tappedNode)
             }
             .simultaneousGesture(
                 // Drag gesture for rotation
                 DragGesture()
                     .onChanged { value in
-                        guard !isZoomedIn else { return } // Disable rotation when zoomed in
-                        let delta = Float(value.translation.width - lastDragTranslationX) * 0.005
-                        rotationManager?.rotate(by: delta)
-                        lastDragTranslationX = value.translation.width
+                        if isZoomedIn {
+                            // Orbital rotation when zoomed in
+                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.01
+                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.01
+                            
+                            // Apply horizontal rotation and clamp it
+                            orbitalAngleHorizontal += deltaX
+                            orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
+                                                         min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
+
+                            // Apply vertical rotation and clamp it
+                            let verticalLimit: Float = .pi / 6 // Still 30 degrees for vertical
+                            orbitalAngleVertical += deltaY
+                            orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
+
+                            updateOrbitalCamera()
+
+                            lastDragTranslationX = value.translation.width
+                            lastDragTranslationY = value.translation.height
+                        } else {
+                            // Room rotation when zoomed out
+                            let delta = Float(value.translation.width - lastDragTranslationX) * 0.005
+                            rotationManager?.rotate(by: delta)
+                            lastDragTranslationX = value.translation.width
+                        }
                     }
                     .onEnded { _ in
-                        guard !isZoomedIn else { return }
-                        rotationManager?.snapToNearestCorner()
-                        lastDragTranslationX = 0
+                        if isZoomedIn {
+                            lastDragTranslationX = 0
+                            lastDragTranslationY = 0
+                        } else {
+                            rotationManager?.snapToNearestCorner()
+                            lastDragTranslationX = 0
+                        }
+                    }
+            )
+            .simultaneousGesture(
+                // Pinch gesture for zoom in/out when zoomed in
+                MagnificationGesture()
+                    .onChanged { value in
+                        guard isZoomedIn else { return }
+                        
+                        // Adjust orbital radius based on pinch
+                        // Note: Value is typically 1.0 for no change, >1.0 for zoom in, <1.0 for zoom out.
+                        // You might want to adjust the multiplier based on desired sensitivity.
+                        let newRadius = orbitalRadius / Float(value)
+                        orbitalRadius = max(1.0, min(10.0, newRadius)) // Clamp between 1 and 10
+                        
+                        updateOrbitalCamera()
                     }
             )
             
@@ -92,7 +144,7 @@ struct InGameView: View {
         let camera = SCNCamera()
         camera.zNear = 1
         camera.zFar = 200
-        camera.focalLength = 100
+        camera.focalLength = 120
         camera.fStop = 1.8
         camera.focusDistance = 3
         
@@ -112,144 +164,57 @@ struct InGameView: View {
         self.cameraNode = cameraNode
         self.rotationManager = RoomRotationManager(scene: loadedScene, hiddenWallConfig: intHiddenConfig)
         self.rotationManager?.updateWallsVisibility()
-        
-        // Setup interaction zones after scene is loaded
-        setupInteractionZones(for: loadedScene)
     }
     
-    private func setupInteractionZones(for scene: SCNScene) {
-        var zones: [InteractionZone] = []
+    private func updateOrbitalCamera() {
+        guard let cameraNode = cameraNode else { return }
         
-        // Method 1: Find zones by parent node names (empties/groups)
-        let zoneNames = ["PeriodicTableZone", "CabinetZone", "DeskZone", "BookshelfZone"] // Add your zone names here
+        // Calculate new camera position based on orbital angles and radius
+        let x = orbitalTarget.x + orbitalRadius * cos(orbitalAngleVertical) * sin(orbitalAngleHorizontal)
+        let y = orbitalTarget.y + orbitalRadius * sin(orbitalAngleVertical)
+        let z = orbitalTarget.z + orbitalRadius * cos(orbitalAngleVertical) * cos(orbitalAngleHorizontal)
         
-        for zoneName in zoneNames {
-            if let zoneNode = scene.rootNode.childNode(withName: zoneName, recursively: true) {
-                let zone = InteractionZone(
-                    name: zoneName,
-                    centerPosition: zoneNode.worldPosition,
-                    radius: 2.0, // Adjust based on your needs
-                    zoomDistance: getZoomDistanceForZone(zoneName),
-                    heightOffset: getHeightOffsetForZone(zoneName)
-                )
-                zones.append(zone)
-                print("Found interaction zone: \(zoneName) at position: \(zoneNode.worldPosition)")
-            }
+        let newPosition = SCNVector3(x: x, y: y, z: z)
+        
+        // Smoothly update camera position and look at target
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 0.1
+        cameraNode.position = newPosition
+        cameraNode.look(at: orbitalTarget) // This handles the orientation, preventing roll and undesired pitch/yaw
+        SCNTransaction.commit()
+    }
+    
+    private func printAllNodeNames(node: SCNNode, level: Int) {
+        let indent = String(repeating: "  ", count: level)
+        if let name = node.name {
+            print("\(indent)Node: \(name)")
+        } else {
+            print("\(indent)Node: <unnamed>")
         }
         
-        // Method 2: Manually define zones if you don't have empty nodes
-        // Uncomment and customize these if you want to manually define zones
-        /*
-         zones.append(InteractionZone(
-         name: "Cabinet Area",
-         centerPosition: SCNVector3(x: 2, y: 0, z: 2),
-         radius: 2.5,
-         zoomDistance: 4.0,
-         heightOffset: 1.0
-         ))
-         
-         zones.append(InteractionZone(
-         name: "Periodic Table Area",
-         centerPosition: SCNVector3(x: -2, y: 0, z: -2),
-         radius: 2.0,
-         zoomDistance: 3.0,
-         heightOffset: 0.5
-         ))
-         */
-        
-        self.interactionZones = zones
-        print("Setup \(zones.count) interaction zones")
-    }
-    
-    private func getZoomDistanceForZone(_ zoneName: String) -> Float {
-        switch zoneName {
-        case "CabinetZone":
-            return 4.0
-        case "PeriodicTableZone":
-            return 3.0
-        case "DeskZone":
-            return 3.5
-        default:
-            return 3.0
+        for child in node.childNodes {
+            printAllNodeNames(node: child, level: level + 1)
         }
     }
     
-    private func getHeightOffsetForZone(_ zoneName: String) -> Float {
-        switch zoneName {
-        case "CabinetZone":
-            return 1.0
-        case "PeriodicTableZone":
-            return 0.5
-        default:
-            return 0.0
-        }
-    }
-    
-    private func handleNodeTap(_ tappedNode: SCNNode) {
-        // First, check if the tapped node or its ancestors belong to an interaction zone
-        if let zone = findInteractionZoneForNode(tappedNode) {
-            print("Node belongs to interaction zone: \(zone.name)")
-            zoomToZone(zone)
-            return
-        }
-        
-        // Fallback: Check if tapped position is within any interaction zone
-        let tappedPosition = tappedNode.worldPosition
-        if let nearestZone = findNearestInteractionZone(to: tappedPosition) {
-            print("Tapped near interaction zone: \(nearestZone.name)")
-            zoomToZone(nearestZone)
-            return
-        }
-        
-        // If no interaction zone found, you can either:
-        // 1. Do nothing (ignore taps outside zones)
-        print("Tap ignored - not in any interaction zone")
-        
-        // 2. Or fallback to original behavior (zoom to specific node)
-        // zoomToNode(tappedNode)
-    }
-    
-    private func findInteractionZoneForNode(_ node: SCNNode) -> InteractionZone? {
-        guard let scene = scene else { return nil }
-        
-        // Check if the node or any of its ancestors is a child of a zone
-        var currentNode: SCNNode? = node
-        
-        while let node = currentNode {
-            // Check if this node's parent is a zone node
-            if let parentName = node.parent?.name {
-                for zone in interactionZones {
-                    if parentName.contains(zone.name.replacingOccurrences(of: "Zone", with: "")) {
-                        return zone
-                    }
+    private func findNodeContaining(keywords: [String], in node: SCNNode) -> SCNNode? {
+        // Check current node
+        if let nodeName = node.name {
+            for keyword in keywords {
+                if nodeName.lowercased().contains(keyword.lowercased()) {
+                    return node
                 }
             }
-            currentNode = node.parent
+        }
+        
+        // Check children recursively
+        for child in node.childNodes {
+            if let found = findNodeContaining(keywords: keywords, in: child) {
+                return found
+            }
         }
         
         return nil
-    }
-    
-    private func findNearestInteractionZone(to position: SCNVector3) -> InteractionZone? {
-        var nearestZone: InteractionZone? = nil
-        var nearestDistance: Float = Float.greatestFiniteMagnitude
-        
-        for zone in interactionZones {
-            let distance = distanceBetween(position, zone.centerPosition)
-            if distance <= zone.radius && distance < nearestDistance {
-                nearestDistance = distance
-                nearestZone = zone
-            }
-        }
-        
-        return nearestZone
-    }
-    
-    private func distanceBetween(_ pos1: SCNVector3, _ pos2: SCNVector3) -> Float {
-        let dx = pos1.x - pos2.x
-        let dy = pos1.y - pos2.y
-        let dz = pos1.z - pos2.z
-        return sqrt(dx*dx + dy*dy + dz*dz)
     }
     
     private func zoomToZone(_ zone: InteractionZone) {
@@ -258,7 +223,7 @@ struct InGameView: View {
         
         zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
     }
-    
+
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -283,12 +248,31 @@ struct InGameView: View {
         
         zoomToPoint(adjustedPosition, distance: distance, nodeName: node.name)
     }
-    
-    // Updated zoomToPoint to accept node name for special handling
+    // Updated zoomToPoint to set up orbital camera
     private func zoomToPoint(_ point: SCNVector3, distance: Float = 3.0, nodeName: String? = nil) {
         guard let cameraNode = cameraNode else { return }
         
         print("Zooming to point: \(point)")
+        
+        // Set up orbital camera parameters
+        orbitalTarget = point
+        orbitalRadius = distance
+        
+        // Calculate initial orbital angles based on current camera position
+        let currentPos = cameraNode.position
+        let directionToTarget = SCNVector3(
+            x: point.x - currentPos.x,
+            y: point.y - currentPos.y,
+            z: point.z - currentPos.z
+        )
+        
+        // Calculate initial angles
+        let horizontalDistance = sqrt(directionToTarget.x * directionToTarget.x + directionToTarget.z * directionToTarget.z)
+        
+        // Store the initial horizontal angle when zooming in
+        initialOrbitalAngleHorizontal = atan2(directionToTarget.x, directionToTarget.z)
+        orbitalAngleHorizontal = initialOrbitalAngleHorizontal // Set current to initial
+        orbitalAngleVertical = atan2(directionToTarget.y, horizontalDistance)
         
         // Calculate camera position in front of the object
         let currentPosition = cameraNode.position
@@ -316,6 +300,12 @@ struct InGameView: View {
             z: point.z - direction.z * distance
         )
         
+        // Special adjustment for Cabinet_1
+        if nodeName == "Cabinet_1" {
+            newCameraPosition.y += 0.0
+            print("Additional camera height adjustment for Cabinet_1")
+        }
+        
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
         // Create smooth animations
@@ -326,8 +316,24 @@ struct InGameView: View {
         cameraNode.runAction(moveAction) {
             // After movement, ensure we're looking at the target
             cameraNode.look(at: point)
+            
+            // Update orbital angles based on final position
+            let finalPos = cameraNode.position
+            let finalDirection = SCNVector3(
+                x: point.x - finalPos.x,
+                y: point.y - finalPos.y,
+                z: point.z - finalPos.z
+            )
+            
+            let finalHorizontalDistance = sqrt(finalDirection.x * finalDirection.x + finalDirection.z * finalDirection.z)
+            
+            // Re-calculate and store the initial horizontal angle after the animation settles
+            self.initialOrbitalAngleHorizontal = atan2(-finalDirection.x, -finalDirection.z)
+            self.orbitalAngleHorizontal = self.initialOrbitalAngleHorizontal
+            self.orbitalAngleVertical = atan2(finalDirection.y, finalHorizontalDistance)
+            
             DispatchQueue.main.async {
-                print("Zoom completed")
+                print("Zoom completed - Orbital camera ready")
                 self.isZoomedIn = true
             }
         }
@@ -337,6 +343,11 @@ struct InGameView: View {
         guard let cameraNode = cameraNode else { return }
         
         print("Zooming out to original position: \(originalCameraPosition)")
+        
+        // Reset orbital parameters
+        orbitalRadius = 3.0
+        orbitalAngleHorizontal = 0.0
+        orbitalAngleVertical = 0.0
         
         // Create smooth move animation
         let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.0)
@@ -348,7 +359,7 @@ struct InGameView: View {
         }
         
         let zoomOutSequence = SCNAction.sequence([
-            SCNAction.group([moveAction]),
+            SCNAction.group([moveAction]), // Group can be used if you want to run other animations concurrently
             restoreOrientationAction
         ])
         
