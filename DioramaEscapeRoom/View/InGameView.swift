@@ -100,17 +100,19 @@ struct InGameView: View {
             // Overlay for back button when zoomed in
             if isZoomedIn {
                 VStack {
-                    HStack {
-                        Button("Back") {
-                            zoomOut()
-                        }
-                        .padding()
-                        .background(Color.black.opacity(0.2))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        Spacer()
-                    }
                     Spacer()
+                    HStack {
+                        Button(action: {
+                            zoomOut()
+                        }) {
+                            Text("Back")
+                                .padding(.horizontal, 48)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                    }
                 }
                 .padding()
             }
