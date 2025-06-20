@@ -118,11 +118,8 @@ struct InGameView: View {
             VStack {
                 HStack {
                     ExitButtonComponent()
-                    Spacer()
                 }
-                Spacer()
             }
-            .padding()
         }
         .onAppear {
             setupScene()
