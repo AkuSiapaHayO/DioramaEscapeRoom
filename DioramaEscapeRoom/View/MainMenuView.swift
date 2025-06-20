@@ -46,16 +46,20 @@ struct MainMenuView: View {
                                             .font(.system(size: 36, weight: .bold, design: .default))
                                         
                                         if let focused = focusedLevel {
-                                            NavigationLink(value: focused) {
-                                                Text("Play")
-                                                    .font(.system(size: 14))
-                                                    .padding(.vertical, 8)
-                                                    .padding(.horizontal, 44)
-                                                    .background(Color.white)
-                                                    .foregroundColor(Color(hex: "044948"))
-                                                    .cornerRadius(20)
+                                            if focused.id == 2 {
+                                                
+                                            } else{
+                                                NavigationLink(value: focused) {
+                                                    Text("Play")
+                                                        .font(.system(size: 14))
+                                                        .padding(.vertical, 8)
+                                                        .padding(.horizontal, 44)
+                                                        .background(Color.white)
+                                                        .foregroundColor(Color(hex: "044948"))
+                                                        .cornerRadius(20)
+                                                }
+                                                .padding(.top, -12)
                                             }
-                                            .padding(.top, -12)
                                         }
                                     }
                                     .padding(.leading, 24)

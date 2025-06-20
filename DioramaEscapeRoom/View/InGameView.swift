@@ -11,10 +11,12 @@ import SceneKit
 struct InGameView: View {
     @State private var focusedObjectName: String? = nil
     @State private var showFocusObjectView = false
+    @State private var openedCabinets: Set<String> = []
     
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
     @State private var lastDragTranslationY: CGFloat = 0.0
+    @State private var lastDragTranslationZ: CGFloat = 0.0
     @State private var rotationManager: RoomRotationManager? = nil
     @State private var scene: SCNScene? = nil
     @State private var cameraNode: SCNNode? = nil
@@ -70,7 +72,7 @@ struct InGameView: View {
                 }
                 
                 print("======================")
-
+                
                 // Now handle the tap based on zoom state
                 if isZoomedIn {
                     print("🔍 Processing tap while ZOOMED IN")
@@ -87,12 +89,45 @@ struct InGameView: View {
                     }()
                     
                     if let targetNode = targetNode {
-                        print("🎯 Using node: \(targetNode.name ?? "<unnamed>")")
-                        focusedObjectName = targetNode.name
+                        let nodeName = targetNode.name ?? ""
+                        print("🎯 Using node: \(nodeName)")
+                        
+                        let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
+
+                        if cabinetNames.contains(nodeName) {
+                            if focusedObjectName == nodeName {
+                                if openedCabinets.contains(nodeName) {
+                                    // 🔁 Cabinet is already open — close it
+                                    print("🔁 Closing cabinet \(nodeName)")
+                                    let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
+                                    moveAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(moveAction)
+                                    openedCabinets.remove(nodeName)
+                                } else {
+                                    // 🚪 Cabinet is closed — open it
+                                    print("🚪 Opening cabinet \(nodeName)")
+                                    let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
+                                    moveAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(moveAction)
+                                    openedCabinets.insert(nodeName)
+                                }
+
+                                return // Skip opening FocusObjectView
+                            } else {
+                                // First time focusing on cabinet
+                                focusedObjectName = nodeName
+                                showFocusObjectView = false
+                                return
+                            }
+                        }
+
+                        // Default behavior: open FocusObjectView
+                        focusedObjectName = nodeName
                         showFocusObjectView = true
                     } else {
                         print("❌ No suitable node found to focus")
                     }
+                    
                 } else {
                     print("🔎 Processing tap while ZOOMED OUT - will zoom to node")
                     zoomToNode(tappedNode)
@@ -113,7 +148,7 @@ struct InGameView: View {
                                                          min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
                             
                             // Apply vertical rotation and clamp it
-                            let verticalLimit: Float = .pi / 2 // Still 30 degrees for vertical
+                            let verticalLimit: Float = .pi / 8// Still 30 degrees for vertical
                             orbitalAngleVertical += deltaY
                             orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
                             
@@ -147,8 +182,10 @@ struct InGameView: View {
                         // Adjust orbital radius based on pinch
                         // Note: Value is typically 1.0 for no change, >1.0 for zoom in, <1.0 for zoom out.
                         // You might want to adjust the multiplier based on desired sensitivity.
-                        let newRadius = orbitalRadius / Float(value)
-                        orbitalRadius = max(1.0, min(10.0, newRadius)) // Clamp between 1 and 10
+                        let zoomSensitivity: Float = 0.1 // Lower = less sensitive (try 0.2–0.5 for smooth control)
+                        let scaleChange = Float(value - 1.0) * zoomSensitivity
+                        let newRadius = orbitalRadius * (1.0 - scaleChange)
+                        orbitalRadius = max(1.0, min(5.0, newRadius))
                         
                         updateOrbitalCamera()
                     }
