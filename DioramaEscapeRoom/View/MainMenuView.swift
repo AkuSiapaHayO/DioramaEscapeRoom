@@ -28,7 +28,7 @@ struct MainMenuView: View {
                     HStack{
                         Image("LockedIn Logo")
                             .resizable()
-                            .frame(width: 100, height: 40)
+                            .frame(width: 115, height: 40)
                         Spacer()
                     }
                     ScrollView(.horizontal, showsIndicators: false) {

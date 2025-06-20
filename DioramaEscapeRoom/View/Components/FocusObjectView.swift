@@ -12,7 +12,9 @@ struct FocusObjectView: View {
     @State private var objectNode = SCNNode()
     @State private var rotationX: Float = 0.0
     @State private var rotationY: Float = 0.0
+    @State private var rotationZ: Float = .pi
     @State private var zoom: Float = 5.0
+    
 
     var body: some View {
         ZStack {
@@ -84,6 +86,14 @@ struct FocusObjectView: View {
             return
         }
         
+        let rotation1: Set<String> = [
+            "Willas___Hayya",
+        ]
+        let rotation2: Set<String> = [
+            "Periodic_Table",
+            
+        ]
+
         print("=== Scene Node Hierarchy ===")
         printAllNodeNames(node: sourceScene.rootNode)
         print("============================")
@@ -91,31 +101,39 @@ struct FocusObjectView: View {
         scene = SCNScene()
         scene.background.contents = UIColor.black
 
+        // Prepare the object
         objectNode = targetNode.clone()
         objectNode.name = "FocusObject"
         objectNode.position = SCNVector3Zero
-        objectNode.eulerAngles = SCNVector3(x: .pi/3, y: 0, z: 0)
-        objectNode.scale = SCNVector3(x: 4, y: 4, z: 4)
         
-        rotationX = objectNode.eulerAngles.x
-        rotationY = objectNode.eulerAngles.y
+        if rotation1.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3Zero
+        } else if rotation2.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 4.6, z: .pi)
+        } else {
+            objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
+        }
+        
+        objectNode.scale = SCNVector3(x: 1, y: 1, z: 1)
 
-        scene.rootNode.addChildNode(objectNode)
-
-
-        // Fit camera based on object size
+        // Calculate bounding box and pivot
         let (minBox, maxBox) = objectNode.boundingBox
         let size = SCNVector3(
             x: maxBox.x - minBox.x,
             y: maxBox.y - minBox.y,
             z: maxBox.z - minBox.z
         )
-        let maxDimension = Swift.max(size.x, size.y, size.z)
-        zoom = Swift.max(maxDimension * 2.5, 4)
+        let center = SCNVector3(
+            x: (minBox.x + maxBox.x) / 2,
+            y: (minBox.y + maxBox.y) / 2,
+            z: (minBox.z + maxBox.z) / 2
+        )
+        objectNode.pivot = SCNMatrix4MakeTranslation(center.x, center.y, center.z)
 
-      
+        // Add object to scene
+        scene.rootNode.addChildNode(objectNode)
 
-        // Camera
+        // Setup camera FIRST
         cameraNode = SCNNode()
         cameraNode.camera = {
             let cam = SCNCamera()
@@ -125,12 +143,29 @@ struct FocusObjectView: View {
             cam.focalLength = 80
             return cam
         }()
-        cameraNode.position = SCNVector3(0, 0, zoom)
         scene.rootNode.addChildNode(cameraNode)
+
+        // Now calculate zoom based on actual camera field of view
+        let fovInRadians = (cameraNode.camera?.fieldOfView ?? 60) * .pi / 180.0
+        let halfFOV = fovInRadians / 2
+        let maxDimension = max(size.x, size.y, size.z)
+        let tanHalfFOV = Float(tan(halfFOV))
+        let baseDistance = maxDimension / (2 * tanHalfFOV)
+        let distance = baseDistance + maxDimension
+        zoom = distance
+
+        // Apply zoom
+        updateCamera()
+
+        // Set initial rotation values
+        rotationX = objectNode.eulerAngles.x
+        rotationY = objectNode.eulerAngles.y
+        rotationZ = objectNode.eulerAngles.z
     }
 
+
     private func updateTransform() {
-        objectNode.eulerAngles = SCNVector3(rotationX, rotationY, 0)
+        objectNode.eulerAngles = SCNVector3(rotationX, rotationY, rotationZ)
     }
 
     private func updateCamera() {
@@ -144,5 +179,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Passcode_Machine")
+    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Calendar")
 }
