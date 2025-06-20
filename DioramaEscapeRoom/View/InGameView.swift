@@ -26,7 +26,7 @@ struct InGameView: View {
     @State private var rotationManager: RoomRotationManager? = nil
     @State private var scene: SCNScene? = nil
     @State private var cameraNode: SCNNode? = nil
-    @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 10, y: 3, z: 10)
+    @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 10, y: 4, z: 10)
     @State private var originalCameraEulerAngles: SCNVector3 = SCNVector3()
     @State private var isZoomedIn: Bool = false
 
@@ -61,7 +61,7 @@ struct InGameView: View {
                             zoomOut()
                         }
                         .padding()
-                        .background(Color.black.opacity(0.7))
+                        .background(Color.black.opacity(0.2))
                         .foregroundColor(.white)
                         .cornerRadius(8)
                         Spacer()
@@ -90,7 +90,7 @@ struct InGameView: View {
         // Camera setting
         let camera = SCNCamera()
         camera.zNear = 1
-        camera.zFar = 100
+        camera.zFar = 200
         camera.focalLength = 100
         camera.fStop = 1.8
         camera.focusDistance = 3
@@ -235,20 +235,20 @@ struct InGameView: View {
         // Position camera in front of the target object
         var newCameraPosition = SCNVector3(
             x: point.x - direction.x * distance,
-            y: point.y - direction.y * distance + 0.5, // Slightly above for better viewing angle
+            y: point.y - direction.y * distance, // Slightly above for better viewing angle
             z: point.z - direction.z * distance
         )
         
         // Special adjustment for Cabinet_1 - move camera higher for better view
         if nodeName == "Cabinet_1" {
-            newCameraPosition.y += 0.5 // Additional height adjustment for cabinet viewing
+            newCameraPosition.y += 0.0// Additional height adjustment for cabinet viewing
             print("Additional camera height adjustment for Cabinet_1")
         }
         
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
         // Create smooth animations
-        let moveAction = SCNAction.move(to: newCameraPosition, duration: 1.5)
+        let moveAction = SCNAction.move(to: newCameraPosition, duration: 1.0)
         moveAction.timingMode = .easeInEaseOut
         
         // Execute the animation
@@ -268,7 +268,7 @@ struct InGameView: View {
         print("Zooming out to original position: \(originalCameraPosition)")
         
         // Create smooth move animation
-        let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.5)
+        let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.0)
         moveAction.timingMode = .easeInEaseOut
         
         // Create smooth rotation animation back to original orientation
