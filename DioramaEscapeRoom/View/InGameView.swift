@@ -8,34 +8,23 @@
 import SwiftUI
 import SceneKit
 
-extension Dictionary {
-    func compactMapKeys<T: Hashable>(_ transform: (Key) -> T?) -> [T: Value] {
-        var result: [T: Value] = [:]
-        for (key, value) in self {
-            if let newKey = transform(key) {
-                result[newKey] = value
-            }
-        }
-        return result
-    }
-}
-
 struct InGameView: View {
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
     @State private var rotationManager: RoomRotationManager? = nil
     @State private var scene: SCNScene? = nil
     @State private var cameraNode: SCNNode? = nil
-    @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 10, y: 4, z: 10)
+    @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 10, y: 7, z: 10)
     @State private var originalCameraEulerAngles: SCNVector3 = SCNVector3()
     @State private var isZoomedIn: Bool = false
+    @State private var interactionZones: [InteractionZone] = []
 
     var body: some View {
         ZStack {
             InteractiveSceneView(scene: scene) { tappedNode in
                 guard !isZoomedIn else { return }
                 print("Tapped node: \(tappedNode.name ?? "Unnamed")")
-                zoomToNode(tappedNode)
+                handleNodeTap(tappedNode)
             }
             .simultaneousGesture(
                 // Drag gesture for rotation
@@ -112,76 +101,152 @@ struct InGameView: View {
         self.rotationManager = RoomRotationManager(scene: loadedScene, hiddenWallConfig: intHiddenConfig)
         self.rotationManager?.updateWallsVisibility()
         
-        // Debug: Print all node names to help identify the correct name
-        printAllNodeNames(node: loadedScene.rootNode, level: 0)
+        // Setup interaction zones after scene is loaded
+        setupInteractionZones(for: loadedScene)
     }
     
-    private func printAllNodeNames(node: SCNNode, level: Int) {
-        let indent = String(repeating: "  ", count: level)
-        if let name = node.name {
-            print("\(indent)Node: \(name)")
-        } else {
-            print("\(indent)Node: <unnamed>")
-        }
+    private func setupInteractionZones(for scene: SCNScene) {
+        var zones: [InteractionZone] = []
         
-        for child in node.childNodes {
-            printAllNodeNames(node: child, level: level + 1)
-        }
-    }
-    
-    private func handleTap() {
-        guard let scene = scene else { return }
+        // Method 1: Find zones by parent node names (empties/groups)
+        let zoneNames = ["PeriodicTableZone", "CabinetZone", "DeskZone", "BookshelfZone"] // Add your zone names here
         
-        if isZoomedIn {
-            zoomOut()
-            return
-        }
-        
-        // For now, let's try to find any node that might be the Periodic Table
-        // We'll check multiple possible names
-        let possibleNames = ["Periodic_Table", "periodic_table", "PeriodicTable", "Table", "table"]
-        
-        for name in possibleNames {
-            if let periodicTableNode = scene.rootNode.childNode(withName: name, recursively: true) {
-                print("Found node with name: \(name)")
-                zoomToNode(periodicTableNode)
-                return
+        for zoneName in zoneNames {
+            if let zoneNode = scene.rootNode.childNode(withName: zoneName, recursively: true) {
+                let zone = InteractionZone(
+                    name: zoneName,
+                    centerPosition: zoneNode.worldPosition,
+                    radius: 2.0, // Adjust based on your needs
+                    zoomDistance: getZoomDistanceForZone(zoneName),
+                    heightOffset: getHeightOffsetForZone(zoneName)
+                )
+                zones.append(zone)
+                print("Found interaction zone: \(zoneName) at position: \(zoneNode.worldPosition)")
             }
         }
         
-        // If we can't find by name, let's try to find any node that contains relevant keywords
-        if let foundNode = findNodeContaining(keywords: ["periodic", "table", "Periodic", "Table"], in: scene.rootNode) {
-            print("Found node containing keyword: \(foundNode.name ?? "unnamed")")
-            zoomToNode(foundNode)
+        // Method 2: Manually define zones if you don't have empty nodes
+        // Uncomment and customize these if you want to manually define zones
+        /*
+        zones.append(InteractionZone(
+            name: "Cabinet Area",
+            centerPosition: SCNVector3(x: 2, y: 0, z: 2),
+            radius: 2.5,
+            zoomDistance: 4.0,
+            heightOffset: 1.0
+        ))
+        
+        zones.append(InteractionZone(
+            name: "Periodic Table Area",
+            centerPosition: SCNVector3(x: -2, y: 0, z: -2),
+            radius: 2.0,
+            zoomDistance: 3.0,
+            heightOffset: 0.5
+        ))
+        */
+        
+        self.interactionZones = zones
+        print("Setup \(zones.count) interaction zones")
+    }
+    
+    private func getZoomDistanceForZone(_ zoneName: String) -> Float {
+        switch zoneName {
+        case "CabinetZone":
+            return 4.0
+        case "PeriodicTableZone":
+            return 3.0
+        case "DeskZone":
+            return 3.5
+        default:
+            return 3.0
+        }
+    }
+    
+    private func getHeightOffsetForZone(_ zoneName: String) -> Float {
+        switch zoneName {
+        case "CabinetZone":
+            return 1.0
+        case "PeriodicTableZone":
+            return 0.5
+        default:
+            return 0.0
+        }
+    }
+    
+    private func handleNodeTap(_ tappedNode: SCNNode) {
+        // First, check if the tapped node or its ancestors belong to an interaction zone
+        if let zone = findInteractionZoneForNode(tappedNode) {
+            print("Node belongs to interaction zone: \(zone.name)")
+            zoomToZone(zone)
             return
         }
         
-        // If still nothing found, let's just zoom to the center for testing
-        print("No Periodic Table found, zooming to center")
-        let centerPoint = SCNVector3(0, 0, 0)
-        zoomToPoint(centerPoint)
+        // Fallback: Check if tapped position is within any interaction zone
+        let tappedPosition = tappedNode.worldPosition
+        if let nearestZone = findNearestInteractionZone(to: tappedPosition) {
+            print("Tapped near interaction zone: \(nearestZone.name)")
+            zoomToZone(nearestZone)
+            return
+        }
+        
+        // If no interaction zone found, you can either:
+        // 1. Do nothing (ignore taps outside zones)
+        print("Tap ignored - not in any interaction zone")
+        
+        // 2. Or fallback to original behavior (zoom to specific node)
+        // zoomToNode(tappedNode)
     }
     
-    private func findNodeContaining(keywords: [String], in node: SCNNode) -> SCNNode? {
-        // Check current node
-        if let nodeName = node.name {
-            for keyword in keywords {
-                if nodeName.lowercased().contains(keyword.lowercased()) {
-                    return node
+    private func findInteractionZoneForNode(_ node: SCNNode) -> InteractionZone? {
+        guard let scene = scene else { return nil }
+        
+        // Check if the node or any of its ancestors is a child of a zone
+        var currentNode: SCNNode? = node
+        
+        while let node = currentNode {
+            // Check if this node's parent is a zone node
+            if let parentName = node.parent?.name {
+                for zone in interactionZones {
+                    if parentName.contains(zone.name.replacingOccurrences(of: "Zone", with: "")) {
+                        return zone
+                    }
                 }
             }
-        }
-        
-        // Check children recursively
-        for child in node.childNodes {
-            if let found = findNodeContaining(keywords: keywords, in: child) {
-                return found
-            }
+            currentNode = node.parent
         }
         
         return nil
     }
     
+    private func findNearestInteractionZone(to position: SCNVector3) -> InteractionZone? {
+        var nearestZone: InteractionZone? = nil
+        var nearestDistance: Float = Float.greatestFiniteMagnitude
+        
+        for zone in interactionZones {
+            let distance = distanceBetween(position, zone.centerPosition)
+            if distance <= zone.radius && distance < nearestDistance {
+                nearestDistance = distance
+                nearestZone = zone
+            }
+        }
+        
+        return nearestZone
+    }
+    
+    private func distanceBetween(_ pos1: SCNVector3, _ pos2: SCNVector3) -> Float {
+        let dx = pos1.x - pos2.x
+        let dy = pos1.y - pos2.y
+        let dz = pos1.z - pos2.z
+        return sqrt(dx*dx + dy*dy + dz*dz)
+    }
+    
+    private func zoomToZone(_ zone: InteractionZone) {
+        var zoomPosition = zone.centerPosition
+        zoomPosition.y += zone.heightOffset
+        
+        zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
+    }
+
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -235,15 +300,9 @@ struct InGameView: View {
         // Position camera in front of the target object
         var newCameraPosition = SCNVector3(
             x: point.x - direction.x * distance,
-            y: point.y - direction.y * distance, // Slightly above for better viewing angle
+            y: point.y - direction.y * distance,
             z: point.z - direction.z * distance
         )
-        
-        // Special adjustment for Cabinet_1 - move camera higher for better view
-        if nodeName == "Cabinet_1" {
-            newCameraPosition.y += 0.0// Additional height adjustment for cabinet viewing
-            print("Additional camera height adjustment for Cabinet_1")
-        }
         
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
@@ -271,15 +330,6 @@ struct InGameView: View {
         let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.0)
         moveAction.timingMode = .easeInEaseOut
         
-        // Create smooth rotation animation back to original orientation
-        let rotateAction = SCNAction.run { _ in
-            // Gradually restore original orientation
-            let tempNode = SCNNode()
-            tempNode.position = self.originalCameraPosition
-            tempNode.look(at: SCNVector3(0, 0.9, 0))
-            cameraNode.eulerAngles = tempNode.eulerAngles
-        }
-        
         // Alternative: Use the stored original euler angles
         let restoreOrientationAction = SCNAction.run { _ in
             cameraNode.eulerAngles = self.originalCameraEulerAngles
@@ -296,23 +346,6 @@ struct InGameView: View {
                 self.isZoomedIn = false
             }
         }
-    }
-
-    // Helper function to calculate better camera positioning
-    private func calculateOptimalCameraPosition(for targetPoint: SCNVector3, objectSize: SCNVector3) -> SCNVector3 {
-        // Calculate the maximum dimension of the object
-        let maxDimension = Swift.max(Swift.max(objectSize.x, objectSize.y), objectSize.z)
-        
-        // Calculate distance based on camera's field of view and object size
-        let fov = cameraNode?.camera?.fieldOfView ?? 60.0
-        let distance = maxDimension / (2.0 * tan(Float(fov * .pi / 180.0) / 2.0)) * 1.5
-        
-        // Position camera in front of the object (assuming object faces toward negative Z)
-        return SCNVector3(
-            x: targetPoint.x,
-            y: targetPoint.y + maxDimension * 0.2, // Slightly above for better angle
-            z: targetPoint.z + Swift.max(distance, 2.0) // Minimum distance
-        )
     }
 }
 
