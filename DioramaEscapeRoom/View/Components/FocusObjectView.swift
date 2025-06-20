@@ -30,15 +30,15 @@ struct FocusObjectView: View {
             .gesture(
                 DragGesture()
                     .onChanged { value in
-                        rotationY += Float(value.translation.width) * 0.001
-                        rotationX += Float(value.translation.height) * 0.001
+                        rotationY += Float(value.translation.width) * 0.0005
+                        rotationX += Float(value.translation.height) * 0.0005
                         updateTransform()
                     }
             )
             .gesture(
                 MagnificationGesture()
                     .onChanged { value in
-                        zoom = max(1.0, min(zoom / Float(value), 20.0))
+                        zoom = max(1.0, min(zoom / Float(value), 10.0))
                         updateCamera()
                     }
             )
