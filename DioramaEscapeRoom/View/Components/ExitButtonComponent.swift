@@ -26,6 +26,7 @@ struct ExitButtonComponent: View {
                         Image("ExitButton")
                             .resizable()
                             .frame(width: 48, height: 48)
+                            .tint(Color.cyan)
                     }
                     Spacer()
                 }
@@ -46,7 +47,7 @@ struct ExitButtonComponent: View {
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 4)
 
                     Text("Your progress will be lost")
                         .font(.subheadline)

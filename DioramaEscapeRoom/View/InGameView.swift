@@ -9,6 +9,9 @@ import SwiftUI
 import SceneKit
 
 struct InGameView: View {
+    @State private var focusedObjectName: String? = nil
+    @State private var showFocusObjectView = false
+    
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
     @State private var lastDragTranslationY: CGFloat = 0.0
@@ -33,13 +36,67 @@ struct InGameView: View {
     
     var body: some View {
         ZStack {
-            Color.white // ✅ White background
-                .ignoresSafeArea()
+            GradientBackground()
             
             InteractiveSceneView(scene: scene) { tappedNode in
-                guard !isZoomedIn else { return }
-                print("Tapped node: \(tappedNode.name ?? "Unnamed")")
-                zoomToNode(tappedNode)
+                // ALWAYS print debug info first, regardless of zoom state
+                print("=== TAP DEBUG INFO ===")
+                print("Tapped node: \(tappedNode)")
+                print("Node name: \(tappedNode.name ?? "NIL")")
+                print("Node parent: \(tappedNode.parent?.name ?? "NIL")")
+                print("Node geometry: \(tappedNode.geometry?.description ?? "NIL")")
+                print("Node position: \(tappedNode.position)")
+                print("Node world position: \(tappedNode.worldPosition)")
+                print("Node euler angles: \(tappedNode.eulerAngles)")
+                print("Node scale: \(tappedNode.scale)")
+                print("Has geometry: \(tappedNode.geometry != nil)")
+                print("Child nodes count: \(tappedNode.childNodes.count)")
+                print("Current zoom state: \(isZoomedIn ? "ZOOMED IN" : "ZOOMED OUT")")
+                
+                // Print all child node names if any
+                if !tappedNode.childNodes.isEmpty {
+                    print("Child nodes:")
+                    for (index, child) in tappedNode.childNodes.enumerated() {
+                        print("  [\(index)]: \(child.name ?? "unnamed")")
+                    }
+                }
+                
+                // Print material information if available
+                if let geometry = tappedNode.geometry {
+                    print("Materials count: \(geometry.materials.count)")
+                    for (index, material) in geometry.materials.enumerated() {
+                        print("  Material[\(index)]: \(material.name ?? "unnamed")")
+                    }
+                }
+                
+                print("======================")
+
+                // Now handle the tap based on zoom state
+                if isZoomedIn {
+                    print("🔍 Processing tap while ZOOMED IN")
+                    
+                    // Prefer parent node if it exists and has a name
+                    let targetNode: SCNNode? = {
+                        if let parent = tappedNode.parent, let parentName = parent.name, !parentName.isEmpty {
+                            return parent
+                        } else if let name = tappedNode.name, !name.isEmpty {
+                            return tappedNode
+                        } else {
+                            return nil
+                        }
+                    }()
+                    
+                    if let targetNode = targetNode {
+                        print("🎯 Using node: \(targetNode.name ?? "<unnamed>")")
+                        focusedObjectName = targetNode.name
+                        showFocusObjectView = true
+                    } else {
+                        print("❌ No suitable node found to focus")
+                    }
+                } else {
+                    print("🔎 Processing tap while ZOOMED OUT - will zoom to node")
+                    zoomToNode(tappedNode)
+                }
             }
             .simultaneousGesture(
                 // Drag gesture for rotation
@@ -47,21 +104,21 @@ struct InGameView: View {
                     .onChanged { value in
                         if isZoomedIn {
                             // Orbital rotation when zoomed in
-                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.01
-                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.01
+                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.005
+                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.005
                             
                             // Apply horizontal rotation and clamp it
                             orbitalAngleHorizontal += deltaX
                             orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
                                                          min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
-
+                            
                             // Apply vertical rotation and clamp it
-                            let verticalLimit: Float = .pi / 6 // Still 30 degrees for vertical
+                            let verticalLimit: Float = .pi / 2 // Still 30 degrees for vertical
                             orbitalAngleVertical += deltaY
                             orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
-
+                            
                             updateOrbitalCamera()
-
+                            
                             lastDragTranslationX = value.translation.width
                             lastDragTranslationY = value.translation.height
                         } else {
@@ -106,11 +163,11 @@ struct InGameView: View {
                             zoomOut()
                         }) {
                             Text("Back")
-                                .padding(.horizontal, 48)
+                                .padding(.horizontal, 120)
                                 .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.2))
+                                .background(Color.black.opacity(0.3))
                                 .foregroundColor(.white)
-                                .cornerRadius(8)
+                                .cornerRadius(12)
                         }
                     }
                 }
@@ -128,6 +185,35 @@ struct InGameView: View {
         }
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
+        .fullScreenCover(isPresented: $showFocusObjectView) {
+            Group {
+                if let nodeName = focusedObjectName, !nodeName.isEmpty {
+                    FocusObjectView(sceneFile: level.sceneFile, nodeName: nodeName)
+                } else {
+                    // Fallback view with debug info
+                    VStack {
+                        Text("Debug: No valid node selected")
+                            .font(.title)
+                            .padding()
+                        
+                        Text("focusedObjectName: \(focusedObjectName ?? "nil")")
+                            .padding()
+                        
+                        Button("Close") {
+                            showFocusObjectView = false
+                        }
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                    }
+                    .onAppear {
+                        print("🚨 FocusObjectView presented with nil/empty focusedObjectName")
+                        print("🚨 Current focusedObjectName value: \(focusedObjectName ?? "nil")")
+                    }
+                }
+            }
+        }
     }
     
     private func setupScene() {
@@ -141,8 +227,8 @@ struct InGameView: View {
         
         // Camera setting
         let camera = SCNCamera()
-        camera.zNear = 1
-        camera.zFar = 200
+        camera.zNear = 0.01
+        camera.zFar = 100
         camera.focalLength = 120
         camera.fStop = 1.8
         camera.focusDistance = 3
@@ -222,7 +308,7 @@ struct InGameView: View {
         
         zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
     }
-
+    
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -299,12 +385,6 @@ struct InGameView: View {
             z: point.z - direction.z * distance
         )
         
-        // Special adjustment for Cabinet_1
-        if nodeName == "Cabinet_1" {
-            newCameraPosition.y += 0.0
-            print("Additional camera height adjustment for Cabinet_1")
-        }
-        
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
         // Create smooth animations
@@ -368,6 +448,7 @@ struct InGameView: View {
                 self.isZoomedIn = false
             }
         }
+        
     }
 }
 
