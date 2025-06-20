@@ -13,13 +13,9 @@ struct ExitButtonComponent: View {
 
     var body: some View {
         ZStack {
-            // 👇 1. Full screen area to allow popup centering
-            Color.clear
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Color.clear // Invisible filler to allow full frame usage
 
-            // 👆 Without this, the ZStack collapses to the button size
-
-            // 🟢 2. The actual exit button (top-left)
+            // Top-left Exit Button
             VStack {
                 HStack {
                     Button(action: {
@@ -33,22 +29,29 @@ struct ExitButtonComponent: View {
                     }
                     Spacer()
                 }
+                .padding()
                 Spacer()
             }
             .padding()
 
-            // 🔴 3. The popup centered
+            // Dimmed background + popup
             if showPopup {
+                // 🛠 This now fills everything correctly on device
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+
                 VStack(spacing: 4) {
                     Text("Exit to main menu?")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
+                        .padding(.bottom, 8)
 
                     Text("Your progress will be lost")
                         .font(.subheadline)
                         .foregroundColor(.white)
-                        .padding(.bottom, 12)
+                        .padding(.bottom, 16)
 
                     HStack(spacing: 24) {
                         Button("Exit") {
@@ -76,7 +79,7 @@ struct ExitButtonComponent: View {
                         .fontWeight(.bold)
                     }
                 }
-                .padding(.all, 24)
+                .padding(24)
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [Color(hex: "00D4DF"), Color(hex: "044948")]),
@@ -90,6 +93,8 @@ struct ExitButtonComponent: View {
                 .shadow(radius: 10)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ Ensures full expansion
+        .ignoresSafeArea() // ✅ Needed at root level
         .animation(.easeInOut(duration: 0.3), value: showPopup)
     }
 }
