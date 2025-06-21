@@ -9,7 +9,7 @@ import SwiftUI
 import SceneKit
 
 struct InGameView: View {
-    @State private var focusedObjectName: String? = nil
+    @State private var focusedObject: FocusedObject? = nil
     @State private var showFocusObjectView = false
     @State private var openedCabinets: Set<String> = []
     
@@ -95,7 +95,6 @@ struct InGameView: View {
                         let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
                         
                         if cabinetNames.contains(nodeName) {
-                            if focusedObjectName == nodeName {
                                 if openedCabinets.contains(nodeName) {
                                     // 🔁 Cabinet is already open — close it
                                     print("🔁 Closing cabinet \(nodeName)")
@@ -111,19 +110,13 @@ struct InGameView: View {
                                     targetNode.runAction(moveAction)
                                     openedCabinets.insert(nodeName)
                                 }
-                                
-                                return // Skip opening FocusObjectView
-                            } else {
-                                // First time focusing on cabinet
-                                focusedObjectName = nodeName
-                                showFocusObjectView = false
                                 return
-                            }
                         }
                         
-                        // Default behavior: open FocusObjectView
-                        focusedObjectName = nodeName
-                        showFocusObjectView = true
+                        DispatchQueue.main.async {
+                            focusedObject = FocusedObject(name: nodeName)
+                            showFocusObjectView = true
+                        }
                     } else {
                         print("❌ No suitable node found to focus")
                     }
@@ -222,34 +215,8 @@ struct InGameView: View {
         }
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
-        .fullScreenCover(isPresented: $showFocusObjectView) {
-            Group {
-                if let nodeName = focusedObjectName, !nodeName.isEmpty {
-                    FocusObjectView(sceneFile: level.sceneFile, nodeName: nodeName)
-                } else {
-                    // Fallback view with debug info
-                    VStack {
-                        Text("Debug: No valid node selected")
-                            .font(.title)
-                            .padding()
-                        
-                        Text("focusedObjectName: \(focusedObjectName ?? "nil")")
-                            .padding()
-                        
-                        Button("Close") {
-                            showFocusObjectView = false
-                        }
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                    .onAppear {
-                        print("🚨 FocusObjectView presented with nil/empty focusedObjectName")
-                        print("🚨 Current focusedObjectName value: \(focusedObjectName ?? "nil")")
-                    }
-                }
-            }
+        .fullScreenCover(item: $focusedObject) { object in
+            FocusObjectView(sceneFile: level.sceneFile, nodeName: object.name)
         }
     }
     
@@ -425,7 +392,7 @@ struct InGameView: View {
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
         // Create smooth animations
-        let moveAction = SCNAction.move(to: newCameraPosition, duration: 1.0)
+        let moveAction = SCNAction.move(to: newCameraPosition, duration: 0.5)
         moveAction.timingMode = .easeInEaseOut
         
         // Execute the animation
@@ -467,7 +434,7 @@ struct InGameView: View {
         
         // Begin smooth camera transition
         SCNTransaction.begin()
-        SCNTransaction.animationDuration = 1.0
+        SCNTransaction.animationDuration = 0.5
         
         // Set the final position and rotation smoothly
         cameraNode.position = originalCameraPosition
