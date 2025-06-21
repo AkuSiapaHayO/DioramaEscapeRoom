@@ -93,7 +93,7 @@ struct InGameView: View {
                         print("🎯 Using node: \(nodeName)")
                         
                         let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
-
+                        
                         if cabinetNames.contains(nodeName) {
                             if focusedObjectName == nodeName {
                                 if openedCabinets.contains(nodeName) {
@@ -111,7 +111,7 @@ struct InGameView: View {
                                     targetNode.runAction(moveAction)
                                     openedCabinets.insert(nodeName)
                                 }
-
+                                
                                 return // Skip opening FocusObjectView
                             } else {
                                 // First time focusing on cabinet
@@ -120,7 +120,7 @@ struct InGameView: View {
                                 return
                             }
                         }
-
+                        
                         // Default behavior: open FocusObjectView
                         focusedObjectName = nodeName
                         showFocusObjectView = true
@@ -465,27 +465,25 @@ struct InGameView: View {
         orbitalAngleHorizontal = 0.0
         orbitalAngleVertical = 0.0
         
-        // Create smooth move animation
-        let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.0)
-        moveAction.timingMode = .easeInEaseOut
+        // Begin smooth camera transition
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 1.0
         
-        // Alternative: Use the stored original euler angles
-        let restoreOrientationAction = SCNAction.run { _ in
-            cameraNode.eulerAngles = self.originalCameraEulerAngles
-        }
+        // Set the final position and rotation smoothly
+        cameraNode.position = originalCameraPosition
+        cameraNode.eulerAngles = originalCameraEulerAngles
         
-        let zoomOutSequence = SCNAction.sequence([
-            SCNAction.group([moveAction]), // Group can be used if you want to run other animations concurrently
-            restoreOrientationAction
-        ])
+        print("Camera position during zoom out: \(cameraNode.position)")
+        print("Camera eulerAngles during zoom out: \(cameraNode.eulerAngles)")
         
-        cameraNode.runAction(zoomOutSequence) {
+        SCNTransaction.completionBlock = {
             DispatchQueue.main.async {
                 print("Zoom out completed")
                 self.isZoomedIn = false
             }
         }
         
+        SCNTransaction.commit()
     }
 }
 
