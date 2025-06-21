@@ -42,45 +42,13 @@ struct InGameView: View {
         ZStack {
             GradientBackground()
             
-            InteractiveSceneView(scene: scene) { tappedNode in
+            InteractiveSceneView(scene: scene, enableDefaultLighting: false) { tappedNode in
                 // ALWAYS print debug info first, regardless of zoom state
                 
                 if isZooming {
                         print("⏳ Ignoring tap - currently zooming")
                         return
                 } else {
-                    print("=== TAP DEBUG INFO ===")
-                    print("Tapped node: \(tappedNode)")
-                    print("Node name: \(tappedNode.name ?? "NIL")")
-                    print("Node parent: \(tappedNode.parent?.name ?? "NIL")")
-                    print("Node geometry: \(tappedNode.geometry?.description ?? "NIL")")
-                    print("Node position: \(tappedNode.position)")
-                    print("Node world position: \(tappedNode.worldPosition)")
-                    print("Node euler angles: \(tappedNode.eulerAngles)")
-                    print("Node scale: \(tappedNode.scale)")
-                    print("Has geometry: \(tappedNode.geometry != nil)")
-                    print("Child nodes count: \(tappedNode.childNodes.count)")
-                    print("Current zoom state: \(isZoomedIn ? "ZOOMED IN" : "ZOOMED OUT")")
-                    
-                    // Print all child node names if any
-                    if !tappedNode.childNodes.isEmpty {
-                        print("Child nodes:")
-                        for (index, child) in tappedNode.childNodes.enumerated() {
-                            print("  [\(index)]: \(child.name ?? "unnamed")")
-                        }
-                    }
-                    
-                    // Print material information if available
-                    if let geometry = tappedNode.geometry {
-                        print("Materials count: \(geometry.materials.count)")
-                        for (index, material) in geometry.materials.enumerated() {
-                            print("  Material[\(index)]: \(material.name ?? "unnamed")")
-                        }
-                    }
-                    
-                    print("======================")
-                    
-                    // Now handle the tap based on zoom state
                     if isZoomedIn {
                         print("🔍 Processing tap while ZOOMED IN")
                         
@@ -100,6 +68,10 @@ struct InGameView: View {
                             if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
                                 nodeName = "Orange_Book"
                             }
+                            
+                            if(nodeName.starts(with: "Numpad_")){
+                                nodeName = "Passcode_Machine"
+                            }
                             print("🎯 Using node: \(nodeName)")
                             
                             let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
@@ -107,20 +79,13 @@ struct InGameView: View {
                             let lockerNames = ["Locker_1", "Locker_2", "Locker_3"]
                             let lockerDoorNames = ["Locker_Door_1", "Locker_Door_2", "Locker_Door_3"]
                             
-                            let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001"]
+                            let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001", "Tubes_1"]
                             
                             let untappableObjectNames = [
-                                "Flask_1_Copy_1",
-                                "Flask_2_Copy_1",
-                                "Flask_3_Copy_1",
-                                "Flask_4_Copy_1",
-                                "Flask_1_Copy_3",
-                                "Flask_1_Copy_2",
-                                "Flask_2_Copy_2",
-                                "Flask_4_Copy_2",
+                                "Window","Floor", "Tiles"
                             ]
                             
-                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") {
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Table") || nodeName.contains("Tube"){
                                 return
                             }
                             

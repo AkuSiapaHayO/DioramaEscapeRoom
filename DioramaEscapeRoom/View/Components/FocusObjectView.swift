@@ -23,14 +23,46 @@ struct FocusObjectView: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
-            SceneView(
-                scene: scene,
-                pointOfView: cameraNode,
-                options: [.autoenablesDefaultLighting],
-                preferredFramesPerSecond: 60,
-                antialiasingMode: .multisampling4X
-            )
-            .background(Color.black)
+//            SceneView(
+//                scene: scene,
+//                options: [.autoenablesDefaultLighting],
+//                preferredFramesPerSecond: 60,
+//                antialiasingMode: .multisampling4X
+//            )
+            InteractiveSceneView(scene: scene, enableDefaultLighting: true) { tappedNode in
+                // Prefer parent node if it exists and has a name
+                let targetNode: SCNNode? = {
+                    if let parent = tappedNode.parent, let parentName = parent.name, !parentName.isEmpty {
+                        return parent
+                    } else if let name = tappedNode.name, !name.isEmpty {
+                        return tappedNode
+                    } else {
+                        return nil
+                    }
+                }()
+
+                guard let target = targetNode, let tappedName = target.name else { return }
+
+                print("🖱️ Tapped node: \(tappedName)")
+
+                if tappedName.starts(with: "Numpad_") {
+                    if let digit = tappedName.components(separatedBy: "_").last {
+                        passcodeInput.append(digit)
+                        print("🔢 Passcode so far: \(passcodeInput)")
+                    }
+                } else {
+                    // fallback behavior like opening book/flask
+                    switch nodeName {
+                    case "Orange_Book":
+                        toggleOrangeBook()
+                    case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
+                        toggleFlask(flaskName: nodeName)
+                    default:
+                        break
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -87,10 +119,27 @@ struct FocusObjectView: View {
                         .cornerRadius(12)
                         .transition(.opacity)
                         .animation(.easeInOut, value: text)
-                    
                 }
             }
-
+            if nodeName == "Passcode_Machine" {
+                HStack {
+                    Spacer()
+                    VStack{
+                        Text("Passcode:")
+                            .font(.system(size:17, weight: .bold))
+                            .foregroundColor(.white)
+                        HStack{
+                            Text(passcodeInput)
+                                .font(.system(size:23, weight: .regular))
+                        }
+                        .frame(width: 150, height: 50)
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        
+                        
+                    }
+                }
+            }
         }
     }
     
