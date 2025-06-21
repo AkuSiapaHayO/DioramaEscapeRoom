@@ -14,7 +14,6 @@ struct FocusObjectView: View {
     @State private var rotationY: Float = 0.0
     @State private var rotationZ: Float = .pi
     @State private var zoom: Float = 5.0
-    
 
     var body: some View {
         ZStack {
@@ -38,7 +37,7 @@ struct FocusObjectView: View {
             .gesture(
                 MagnificationGesture()
                     .onChanged { value in
-                        zoom = max(1.0, min(zoom / Float(value), 10.0))
+                        zoom = max(0.1, min(zoom / Float(value), 1.5))
                         updateCamera()
                     }
             )
@@ -91,6 +90,7 @@ struct FocusObjectView: View {
             "Paper_2",
             "Paper_1",
             "Photo_4",
+            "Window"
         ]
         let rotation2: Set<String> = [
             "Periodic_Table",
@@ -117,6 +117,7 @@ struct FocusObjectView: View {
         ]
         let rotation5: Set<String> = [
             "Science_Poster",
+            "Photo_1"
         ]
 
         scene = SCNScene()
@@ -205,5 +206,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Science_Poster")
+    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Photo_1")
 }
