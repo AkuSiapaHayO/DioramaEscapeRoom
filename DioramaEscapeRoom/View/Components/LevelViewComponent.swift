@@ -55,5 +55,5 @@ struct LevelViewComponent: View {
 }
 
 #Preview {
-    LevelViewComponent(level: Level(id: 1, name: "Test Level", sceneFile: "Level1.scn"))
+    LevelViewComponent(level: Level(id: 1, name: "Test Level", sceneFile: "Science Lab Updated.scn"))
 }
