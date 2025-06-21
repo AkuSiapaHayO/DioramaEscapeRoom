@@ -89,7 +89,10 @@ struct InGameView: View {
                     }()
                     
                     if let targetNode = targetNode {
-                        let nodeName = targetNode.name ?? ""
+                        var nodeName = targetNode.name ?? ""
+                        if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
+                            nodeName = "Orange_Book"
+                        }
                         print("🎯 Using node: \(nodeName)")
                         
                         let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
@@ -392,7 +395,7 @@ struct InGameView: View {
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
         // Create smooth animations
-        let moveAction = SCNAction.move(to: newCameraPosition, duration: 0.5)
+        let moveAction = SCNAction.move(to: newCameraPosition, duration: 1.0)
         moveAction.timingMode = .easeInEaseOut
         
         // Execute the animation
@@ -434,7 +437,7 @@ struct InGameView: View {
         
         // Begin smooth camera transition
         SCNTransaction.begin()
-        SCNTransaction.animationDuration = 0.5
+        SCNTransaction.animationDuration = 1.0
         
         // Set the final position and rotation smoothly
         cameraNode.position = originalCameraPosition

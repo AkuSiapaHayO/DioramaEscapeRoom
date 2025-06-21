@@ -2,7 +2,7 @@
     {
         "id": 1,
         "name": "The Mad Scientist",
-        "sceneFile": "Level1.scn",
+        "sceneFile": "Science Lab Updated.scn",
         "mainMenuHiddenItems": ["Wall_2", "Wall_3"],
         "inGameHiddenItems": {
             "0": ["Wall_2", "Wall_3"],
