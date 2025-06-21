@@ -119,10 +119,6 @@ struct FocusObjectView: View {
             "Science_Poster",
         ]
 
-        print("=== Scene Node Hierarchy ===")
-        printAllNodeNames(node: sourceScene.rootNode)
-        print("============================")
-
         scene = SCNScene()
         scene.background.contents = UIColor.black
 
