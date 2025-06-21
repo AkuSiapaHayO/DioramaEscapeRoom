@@ -24,6 +24,7 @@ struct InGameView: View {
     @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 12, y: 8, z: 12)
     @State private var originalCameraEulerAngles: SCNVector3 = SCNVector3()
     @State private var isZoomedIn: Bool = false
+    @State private var isZooming: Bool = false
     
     // Orbital camera properties
     @State private var orbitalRadius: Float = 3.0
@@ -35,112 +36,106 @@ struct InGameView: View {
     @State private var initialOrbitalAngleHorizontal: Float = 0.0
     
     // Constants for limiting rotation
-    let horizontalRotationLimit: Float = 25.0 * (.pi / 180.0)
+    let horizontalRotationLimit: Float = 30.0 * (.pi / 180.0)
     
     var body: some View {
         ZStack {
             GradientBackground()
             
-            InteractiveSceneView(scene: scene) { tappedNode in
+            InteractiveSceneView(scene: scene, enableDefaultLighting: false) { tappedNode in
                 // ALWAYS print debug info first, regardless of zoom state
-                print("=== TAP DEBUG INFO ===")
-                print("Tapped node: \(tappedNode)")
-                print("Node name: \(tappedNode.name ?? "NIL")")
-                print("Node parent: \(tappedNode.parent?.name ?? "NIL")")
-                print("Node geometry: \(tappedNode.geometry?.description ?? "NIL")")
-                print("Node position: \(tappedNode.position)")
-                print("Node world position: \(tappedNode.worldPosition)")
-                print("Node euler angles: \(tappedNode.eulerAngles)")
-                print("Node scale: \(tappedNode.scale)")
-                print("Has geometry: \(tappedNode.geometry != nil)")
-                print("Child nodes count: \(tappedNode.childNodes.count)")
-                print("Current zoom state: \(isZoomedIn ? "ZOOMED IN" : "ZOOMED OUT")")
                 
-                // Print all child node names if any
-                if !tappedNode.childNodes.isEmpty {
-                    print("Child nodes:")
-                    for (index, child) in tappedNode.childNodes.enumerated() {
-                        print("  [\(index)]: \(child.name ?? "unnamed")")
-                    }
-                }
-                
-                // Print material information if available
-                if let geometry = tappedNode.geometry {
-                    print("Materials count: \(geometry.materials.count)")
-                    for (index, material) in geometry.materials.enumerated() {
-                        print("  Material[\(index)]: \(material.name ?? "unnamed")")
-                    }
-                }
-                
-                print("======================")
-                
-                // Now handle the tap based on zoom state
-                if isZoomedIn {
-                    print("🔍 Processing tap while ZOOMED IN")
-                    
-                    // Prefer parent node if it exists and has a name
-                    let targetNode: SCNNode? = {
-                        if let parent = tappedNode.parent, let parentName = parent.name, !parentName.isEmpty {
-                            return parent
-                        } else if let name = tappedNode.name, !name.isEmpty {
-                            return tappedNode
-                        } else {
-                            return nil
-                        }
-                    }()
-                    
-                    if let targetNode = targetNode {
-                        var nodeName = targetNode.name ?? ""
-                        if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
-                            nodeName = "Orange_Book"
-                        }
-                        print("🎯 Using node: \(nodeName)")
+                if isZooming {
+                        print("⏳ Ignoring tap - currently zooming")
+                        return
+                } else {
+                    if isZoomedIn {
+                        print("🔍 Processing tap while ZOOMED IN")
                         
-                        let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
+                        // Prefer parent node if it exists and has a name
+                        let targetNode: SCNNode? = {
+                            if let parent = tappedNode.parent, let parentName = parent.name, !parentName.isEmpty {
+                                return parent
+                            } else if let name = tappedNode.name, !name.isEmpty {
+                                return tappedNode
+                            } else {
+                                return nil
+                            }
+                        }()
                         
-                        let lockerNames = ["Locker_1", "Locker_2", "Locker_3"]
-                        let lockerDoorNames = ["Locker_Door_1", "Locker_Door_2", "Locker_Door_3"]
-
-                        // Normalize to locker node
-                        var lockerNode: SCNNode? = nil
-
-                        if lockerNames.contains(nodeName) {
-                            lockerNode = targetNode
-                        } else if lockerDoorNames.contains(nodeName), let parent = targetNode.parent {
-                            lockerNode = parent
-                        }
-
-                        if let locker = lockerNode, let lockerName = locker.name {
-                            let doorName = "Locker_Door_\(lockerName.last!)"
+                        if let targetNode = targetNode {
+                            var nodeName = targetNode.name ?? ""
+                            if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
+                                nodeName = "Orange_Book"
+                            }
                             
-                            if let doorNode = locker.childNode(withName: doorName, recursively: true) {
-                                if openedLockers.contains(lockerName) {
-                                    print("🔁 Closing locker \(lockerName)")
-                                    let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
-                                    rotateAction.timingMode = .easeInEaseOut
-                                    doorNode.runAction(rotateAction)
-                                    openedLockers.remove(lockerName)
-                                } else {
-                                    print("🚪 Opening locker \(lockerName)")
-                                    let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 0.5)
-                                    rotateAction.timingMode = .easeInEaseOut
-                                    doorNode.runAction(rotateAction)
-                                    openedLockers.insert(lockerName)
-                                }
-
-                                // ✅ Prevent further interaction (e.g., showing FocusObjectView)
+                            if(nodeName.starts(with: "Numpad_")){
+                                nodeName = "Passcode_Machine"
+                            }
+                            print("🎯 Using node: \(nodeName)")
+                            
+                            let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
+                            
+                            let lockerNames = ["Locker_1", "Locker_2", "Locker_3"]
+                            let lockerDoorNames = ["Locker_Door_1", "Locker_Door_2", "Locker_Door_3"]
+                            
+                            let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001", "Tubes_1"]
+                            
+                            let untappableObjectNames = [
+                                "Window","Floor", "Tiles"
+                            ]
+                            
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Table") || nodeName.contains("Tube"){
                                 return
                             }
-                        }
-                        
-                        if nodeName == "Door"{
-                            let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
-                            rotateAction.timingMode = .easeInEaseOut
-                            targetNode.runAction(rotateAction)
-                            return
-                        }
-                        
-                        if cabinetNames.contains(nodeName) {
+                            
+                            if RotatingObjectNames.contains(nodeName) {
+                                let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
+                                rotateAction.timingMode = .easeInEaseOut
+                                targetNode.runAction(rotateAction)
+                                return
+                            }
+                            
+                            // Normalize to locker node
+                            var lockerNode: SCNNode? = nil
+                            
+                            if lockerNames.contains(nodeName) {
+                                lockerNode = targetNode
+                            } else if lockerDoorNames.contains(nodeName), let parent = targetNode.parent {
+                                lockerNode = parent
+                            }
+                            
+                            if let locker = lockerNode, let lockerName = locker.name {
+                                let doorName = "Locker_Door_\(lockerName.last!)"
+                                
+                                if let doorNode = locker.childNode(withName: doorName, recursively: true) {
+                                    if openedLockers.contains(lockerName) {
+                                        print("🔁 Closing locker \(lockerName)")
+                                        let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
+                                        rotateAction.timingMode = .easeInEaseOut
+                                        doorNode.runAction(rotateAction)
+                                        openedLockers.remove(lockerName)
+                                    } else {
+                                        print("🚪 Opening locker \(lockerName)")
+                                        let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 0.5)
+                                        rotateAction.timingMode = .easeInEaseOut
+                                        doorNode.runAction(rotateAction)
+                                        openedLockers.insert(lockerName)
+                                    }
+                                    
+                                    // ✅ Prevent further interaction (e.g., showing FocusObjectView)
+                                    return
+                                }
+                            }
+                            
+                            if nodeName == "Door"{
+                                let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
+                                rotateAction.timingMode = .easeInEaseOut
+                                targetNode.runAction(rotateAction)
+                                return
+                            }
+                            
+                            if cabinetNames.contains(nodeName) {
                                 if openedCabinets.contains(nodeName) {
                                     // 🔁 Cabinet is already open — close it
                                     print("🔁 Closing cabinet \(nodeName)")
@@ -157,19 +152,20 @@ struct InGameView: View {
                                     openedCabinets.insert(nodeName)
                                 }
                                 return
+                            }
+                            
+                            DispatchQueue.main.async {
+                                focusedObject = FocusedObject(name: nodeName)
+                                showFocusObjectView = true
+                            }
+                        } else {
+                            print("❌ No suitable node found to focus")
                         }
                         
-                        DispatchQueue.main.async {
-                            focusedObject = FocusedObject(name: nodeName)
-                            showFocusObjectView = true
-                        }
                     } else {
-                        print("❌ No suitable node found to focus")
+                        print("🔎 Processing tap while ZOOMED OUT - will zoom to node")
+                        zoomToNode(tappedNode)
                     }
-                    
-                } else {
-                    print("🔎 Processing tap while ZOOMED OUT - will zoom to node")
-                    zoomToNode(tappedNode)
                 }
             }
             .simultaneousGesture(
@@ -187,7 +183,7 @@ struct InGameView: View {
                                                          min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
                             
                             // Apply vertical rotation and clamp it
-                            let verticalLimit: Float = .pi / 8// Still 30 degrees for vertical
+                            let verticalLimit: Float = .pi // Still 30 degrees for vertical
                             orbitalAngleVertical += deltaY
                             orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
                             
@@ -241,7 +237,7 @@ struct InGameView: View {
                             Text("Back")
                                 .padding(.horizontal, 120)
                                 .padding(.vertical, 12)
-                                .background(Color.black.opacity(0.3))
+                                .background(Color.black.opacity(0.4))
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
                         }
@@ -352,13 +348,6 @@ struct InGameView: View {
         return nil
     }
     
-    private func zoomToZone(_ zone: InteractionZone) {
-        var zoomPosition = zone.centerPosition
-        zoomPosition.y += zone.heightOffset
-        
-        zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
-    }
-    
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -383,9 +372,11 @@ struct InGameView: View {
         
         zoomToPoint(adjustedPosition, distance: distance, nodeName: node.name)
     }
-    // Updated zoomToPoint to set up orbital camera
+    
     private func zoomToPoint(_ point: SCNVector3, distance: Float = 3.0, nodeName: String? = nil) {
         guard let cameraNode = cameraNode else { return }
+        
+        isZooming = true
         
         print("Zooming to point: \(point)")
         
@@ -464,12 +455,19 @@ struct InGameView: View {
             DispatchQueue.main.async {
                 print("Zoom completed - Orbital camera ready")
                 self.isZoomedIn = true
+                self.isZooming = false
+
+                // ✅ Reset translation to prevent jump
+                self.lastDragTranslationX = 0
+                self.lastDragTranslationY = 0
             }
         }
     }
     
     private func zoomOut() {
         guard let cameraNode = cameraNode else { return }
+        
+        isZooming = true
         
         print("Zooming out to original position: \(originalCameraPosition)")
         
@@ -497,6 +495,7 @@ struct InGameView: View {
         }
         
         SCNTransaction.commit()
+        isZooming = false
     }
 }
 

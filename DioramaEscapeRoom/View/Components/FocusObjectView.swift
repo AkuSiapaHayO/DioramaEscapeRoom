@@ -17,19 +17,52 @@ struct FocusObjectView: View {
     
     @State private var hasBookOpened = false
     @State private var openedFlasks: Set<String> = []
-
+    
+    @State private var passcodeInput: String = ""
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
-            SceneView(
-                scene: scene,
-                pointOfView: cameraNode,
-                options: [.autoenablesDefaultLighting],
-                preferredFramesPerSecond: 60,
-                antialiasingMode: .multisampling4X
-            )
-            .background(Color.black)
+//            SceneView(
+//                scene: scene,
+//                options: [.autoenablesDefaultLighting],
+//                preferredFramesPerSecond: 60,
+//                antialiasingMode: .multisampling4X
+//            )
+            InteractiveSceneView(scene: scene, enableDefaultLighting: true) { tappedNode in
+                // Prefer parent node if it exists and has a name
+                let targetNode: SCNNode? = {
+                    if let parent = tappedNode.parent, let parentName = parent.name, !parentName.isEmpty {
+                        return parent
+                    } else if let name = tappedNode.name, !name.isEmpty {
+                        return tappedNode
+                    } else {
+                        return nil
+                    }
+                }()
+
+                guard let target = targetNode, let tappedName = target.name else { return }
+
+                print("🖱️ Tapped node: \(tappedName)")
+
+                if tappedName.starts(with: "Numpad_") {
+                    if let digit = tappedName.components(separatedBy: "_").last {
+                        passcodeInput.append(digit)
+                        print("🔢 Passcode so far: \(passcodeInput)")
+                    }
+                } else {
+                    // fallback behavior like opening book/flask
+                    switch nodeName {
+                    case "Orange_Book":
+                        toggleOrangeBook()
+                    case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
+                        toggleFlask(flaskName: nodeName)
+                    default:
+                        break
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -86,10 +119,27 @@ struct FocusObjectView: View {
                         .cornerRadius(12)
                         .transition(.opacity)
                         .animation(.easeInOut, value: text)
-                    
                 }
             }
-
+            if nodeName == "Passcode_Machine" {
+                HStack {
+                    Spacer()
+                    VStack{
+                        Text("Passcode:")
+                            .font(.system(size:17, weight: .bold))
+                            .foregroundColor(.white)
+                        HStack{
+                            Text(passcodeInput)
+                                .font(.system(size:23, weight: .regular))
+                        }
+                        .frame(width: 150, height: 50)
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        
+                        
+                    }
+                }
+            }
         }
     }
     
@@ -118,7 +168,8 @@ struct FocusObjectView: View {
             "Paper_2",
             "Paper_1",
             "Photo_4",
-            "Window"
+            "Window",
+            "Riddle_1",
         ]
         let rotation2: Set<String> = [
             "Periodic_Table",
@@ -131,7 +182,7 @@ struct FocusObjectView: View {
             "Red_Book_1",
             "Red_Book_3",
             "Photo_2",
-            "Orange_Book"
+            "Orange_Book",
         ]
         let rotation3: Set<String> = [
             "Calendar",
@@ -146,9 +197,20 @@ struct FocusObjectView: View {
         ]
         let rotation5: Set<String> = [
             "Science_Poster",
-            "Photo_1"
+            "Photo_1",
         ]
-
+        
+        let rotation6: Set<String> = [
+            "Flask_1",
+            "Flask_2",
+            "Flask_3",
+            "Flask_4",
+        ]
+        
+        let rotation7: Set<String> = [
+            "Riddle_2",
+            "Riddle_3"
+        ]
         scene = SCNScene()
         scene.background.contents = UIColor.black
 
@@ -166,6 +228,10 @@ struct FocusObjectView: View {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: .pi, z: .pi)
         } else if rotation5.contains(nodeName) {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: -4.6, z: .pi)
+        } else if rotation6.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: .pi/2, y: .pi, z: .pi)
+        } else if rotation7.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: .pi)
         } else {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         }
@@ -280,14 +346,14 @@ struct FocusObjectView: View {
         // Pause user gestures while animating
         withAnimation(.easeInOut(duration: duration)) {
             if openedFlasks.contains(flaskName) {
-                let rotateBack = SCNAction.rotateBy(x: -rotateAngle, y: 0, z: 0, duration: duration)
+                let rotateBack = SCNAction.rotateBy(x: rotateAngle, y: 0, z: 0, duration: duration)
                 rotateBack.timingMode = .easeInEaseOut
                 flaskNode.runAction(rotateBack)
 
                 openedFlasks.remove(flaskName)
                 print("🧪 \(flaskName) closed")
             } else {
-                let rotateForward = SCNAction.rotateBy(x: rotateAngle, y: 0, z: 0, duration: duration)
+                let rotateForward = SCNAction.rotateBy(x: -rotateAngle, y: 0, z: 0, duration: duration)
                 rotateForward.timingMode = .easeInEaseOut
                 flaskNode.runAction(rotateForward)
 
@@ -311,5 +377,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Orange_Book")
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Passcode_Machine")
 }
