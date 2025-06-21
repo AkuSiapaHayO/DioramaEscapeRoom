@@ -14,6 +14,10 @@ struct FocusObjectView: View {
     @State private var rotationY: Float = 0.0
     @State private var rotationZ: Float = .pi
     @State private var zoom: Float = 5.0
+    
+    @State private var hasBookOpened = false
+    @State private var openedFlasks: Set<String> = []
+
 
     var body: some View {
         ZStack {
@@ -29,6 +33,7 @@ struct FocusObjectView: View {
             .gesture(
                 DragGesture()
                     .onChanged { value in
+                        guard !["Flask_1", "Flask_2", "Flask_3", "Flask_4"].contains(nodeName) else { return }
                         rotationY += Float(value.translation.width) * 0.0005
                         rotationX += Float(value.translation.height) * 0.0005
                         updateTransform()
@@ -41,6 +46,16 @@ struct FocusObjectView: View {
                         updateCamera()
                     }
             )
+            .onTapGesture {
+                switch nodeName {
+                case "Orange_Book":
+                    toggleOrangeBook()
+                case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
+                    toggleFlask(flaskName: nodeName)
+                default:
+                    break
+                }
+            }
             .onAppear {
                 setupScene()
             }
@@ -62,6 +77,19 @@ struct FocusObjectView: View {
                 }
                 Spacer()
             }
+            if let text = instructionText {
+                HStack {
+                    Spacer()
+                    Text(text)
+                        .padding()
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: text)
+                    
+                }
+            }
+
         }
     }
     
@@ -103,6 +131,7 @@ struct FocusObjectView: View {
             "Red_Book_1",
             "Red_Book_3",
             "Photo_2",
+            "Orange_Book"
         ]
         let rotation3: Set<String> = [
             "Calendar",
@@ -125,7 +154,7 @@ struct FocusObjectView: View {
 
         // Prepare the object
         objectNode = targetNode.clone()
-        objectNode.name = "FocusObject"
+//        objectNode.name = "FocusObject"
         objectNode.position = SCNVector3Zero
         
         if rotation1.contains(nodeName) {
@@ -202,9 +231,85 @@ struct FocusObjectView: View {
     func degreesToRadians(_ degrees: Float) -> Float {
         return degrees * .pi / 180
     }
+    
+    private func toggleOrangeBook() {
+        let half1 = objectNode.childNode(withName: "Orange_Book_Half_1", recursively: true)
+        let half2 = objectNode.childNode(withName: "Orange_Book_Half_2", recursively: true)
+
+        let duration: TimeInterval = 0.6
+
+        if let leftHalf = half1, let rightHalf = half2 {
+            if hasBookOpened {
+                // 🔒 CLOSE book
+                let closeLeft = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: duration)
+                let closeRight = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: duration)
+                closeLeft.timingMode = .easeInEaseOut
+                closeRight.timingMode = .easeInEaseOut
+
+                leftHalf.runAction(closeLeft)
+                rightHalf.runAction(closeRight)
+
+                print("📕 Orange_Book closed")
+            } else {
+                // 📖 OPEN book
+                let openLeft = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: duration)
+                let openRight = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: duration)
+                openLeft.timingMode = .easeInEaseOut
+                openRight.timingMode = .easeInEaseOut
+
+                leftHalf.runAction(openLeft)
+                rightHalf.runAction(openRight)
+
+                print("📖 Orange_Book opened")
+            }
+            hasBookOpened.toggle()
+        }
+    }
+    
+    private func toggleFlask(flaskName: String) {
+        let duration: TimeInterval = 0.5
+        let rotateAngle: CGFloat = .pi / 2
+
+        guard flaskName == objectNode.name else {
+            print("⚠️ Object name mismatch: expected \(flaskName), got \(objectNode.name ?? "nil")")
+            return
+        }
+
+        let flaskNode = objectNode
+
+        // Pause user gestures while animating
+        withAnimation(.easeInOut(duration: duration)) {
+            if openedFlasks.contains(flaskName) {
+                let rotateBack = SCNAction.rotateBy(x: -rotateAngle, y: 0, z: 0, duration: duration)
+                rotateBack.timingMode = .easeInEaseOut
+                flaskNode.runAction(rotateBack)
+
+                openedFlasks.remove(flaskName)
+                print("🧪 \(flaskName) closed")
+            } else {
+                let rotateForward = SCNAction.rotateBy(x: rotateAngle, y: 0, z: 0, duration: duration)
+                rotateForward.timingMode = .easeInEaseOut
+                flaskNode.runAction(rotateForward)
+
+                openedFlasks.insert(flaskName)
+                print("🧪 \(flaskName) opened")
+            }
+        }
+    }
+    
+    private var instructionText: String? {
+        switch nodeName {
+        case "Orange_Book":
+            return hasBookOpened ? "Tap to fold" : "Tap to unfold"
+        case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
+            return openedFlasks.contains(nodeName) ? "Tap to unview" : "Tap to view code"
+        default:
+            return nil
+        }
+    }
 
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Level1.scn", nodeName: "Photo_1")
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Orange_Book")
 }
