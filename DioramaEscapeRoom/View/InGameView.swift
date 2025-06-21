@@ -12,6 +12,7 @@ struct InGameView: View {
     @State private var focusedObject: FocusedObject? = nil
     @State private var showFocusObjectView = false
     @State private var openedCabinets: Set<String> = []
+    @State private var openedLockers: Set<String> = []
     
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
@@ -96,6 +97,48 @@ struct InGameView: View {
                         print("🎯 Using node: \(nodeName)")
                         
                         let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
+                        
+                        let lockerNames = ["Locker_1", "Locker_2", "Locker_3"]
+                        let lockerDoorNames = ["Locker_Door_1", "Locker_Door_2", "Locker_Door_3"]
+
+                        // Normalize to locker node
+                        var lockerNode: SCNNode? = nil
+
+                        if lockerNames.contains(nodeName) {
+                            lockerNode = targetNode
+                        } else if lockerDoorNames.contains(nodeName), let parent = targetNode.parent {
+                            lockerNode = parent
+                        }
+
+                        if let locker = lockerNode, let lockerName = locker.name {
+                            let doorName = "Locker_Door_\(lockerName.last!)"
+                            
+                            if let doorNode = locker.childNode(withName: doorName, recursively: true) {
+                                if openedLockers.contains(lockerName) {
+                                    print("🔁 Closing locker \(lockerName)")
+                                    let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
+                                    rotateAction.timingMode = .easeInEaseOut
+                                    doorNode.runAction(rotateAction)
+                                    openedLockers.remove(lockerName)
+                                } else {
+                                    print("🚪 Opening locker \(lockerName)")
+                                    let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 0.5)
+                                    rotateAction.timingMode = .easeInEaseOut
+                                    doorNode.runAction(rotateAction)
+                                    openedLockers.insert(lockerName)
+                                }
+
+                                // ✅ Prevent further interaction (e.g., showing FocusObjectView)
+                                return
+                            }
+                        }
+                        
+                        if nodeName == "Door"{
+                            let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
+                            rotateAction.timingMode = .easeInEaseOut
+                            targetNode.runAction(rotateAction)
+                            return
+                        }
                         
                         if cabinetNames.contains(nodeName) {
                                 if openedCabinets.contains(nodeName) {
