@@ -9,15 +9,24 @@ import SwiftUI
 import SceneKit
 
 struct InGameView: View {
+    @State private var focusedObject: FocusedObject? = nil
+    @State private var showFocusObjectView = false
+    @State private var showMicroscope = false
+    @State private var openedCabinets: Set<String> = []
+    @State private var openedLockers: Set<String> = []
+    @State var inventory: [String] = []
+    
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
     @State private var lastDragTranslationY: CGFloat = 0.0
+    @State private var lastDragTranslationZ: CGFloat = 0.0
     @State private var rotationManager: RoomRotationManager? = nil
     @State private var scene: SCNScene? = nil
     @State private var cameraNode: SCNNode? = nil
     @State private var originalCameraPosition: SCNVector3 = SCNVector3(x: 12, y: 8, z: 12)
     @State private var originalCameraEulerAngles: SCNVector3 = SCNVector3()
     @State private var isZoomedIn: Bool = false
+    @State private var isZooming: Bool = false
     
     // Orbital camera properties
     @State private var orbitalRadius: Float = 3.0
@@ -29,39 +38,179 @@ struct InGameView: View {
     @State private var initialOrbitalAngleHorizontal: Float = 0.0
     
     // Constants for limiting rotation
-    let horizontalRotationLimit: Float = 25.0 * (.pi / 180.0)
+    let horizontalRotationLimit: Float = 30.0 * (.pi / 180.0)
     
     var body: some View {
         ZStack {
-            Color.white // ✅ White background
-                .ignoresSafeArea()
+            GradientBackground()
             
-            InteractiveSceneView(scene: scene) { tappedNode in
-                guard !isZoomedIn else { return }
-                print("Tapped node: \(tappedNode.name ?? "Unnamed")")
-                zoomToNode(tappedNode)
+            InteractiveSceneView(scene: scene, enableDefaultLighting: false) { tappedNode in
+                // ALWAYS print debug info first, regardless of zoom state
+                
+                if isZooming {
+                    print("⏳ Ignoring tap - currently zooming")
+                    return
+                } else {
+                    if isZoomedIn {
+                        print("🔍 Processing tap while ZOOMED IN")
+                        
+                        // Prefer parent node if it exists and has a name
+                        let targetNode: SCNNode? = {
+                            if let parent = tappedNode.parent, let parentName = parent.name, !parentName.isEmpty {
+                                return parent
+                            } else if let name = tappedNode.name, !name.isEmpty {
+                                return tappedNode
+                            } else {
+                                return nil
+                            }
+                        }()
+                        
+                        if let targetNode = targetNode {
+                            var nodeName = targetNode.name ?? ""
+                            if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
+                                nodeName = "Orange_Book"
+                            }
+                            
+                            if(nodeName.starts(with: "Numpad_")){
+                                nodeName = "Passcode_Machine"
+                            }
+                            print("🎯 Using node: \(nodeName)")
+                            
+                            let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
+                            
+                            let lockerNames = ["Locker_1", "Locker_2", "Locker_3"]
+                            let lockerDoorNames = ["Locker_Door_1", "Locker_Door_2", "Locker_Door_3"]
+                            
+                            let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001", "Tubes_1"]
+                            
+                            let untappableObjectNames = [
+                                "Window","Floor", "Tiles", "Table", "Table_2", "Small_Table"
+                            ]
+                            
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Drawer") || nodeName.contains("Tube"){
+                                return
+                            }
+                            
+                            if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
+                                inventory.append(nodeName)
+                                if let scene = scene, // unwrap the optional scene
+                                   let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
+                                    targetNode.isHidden = true
+                                }
+                                return
+                            }
+                            
+                            if RotatingObjectNames.contains(nodeName) {
+                                let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
+                                rotateAction.timingMode = .easeInEaseOut
+                                targetNode.runAction(rotateAction)
+                                return
+                            }
+                            
+                            // Normalize to locker node
+                            var lockerNode: SCNNode? = nil
+                            
+                            if lockerNames.contains(nodeName) {
+                                lockerNode = targetNode
+                            } else if lockerDoorNames.contains(nodeName), let parent = targetNode.parent {
+                                lockerNode = parent
+                            }
+                            
+                            if let locker = lockerNode, let lockerName = locker.name {
+                                let doorName = "Locker_Door_\(lockerName.last!)"
+                                
+                                if let doorNode = locker.childNode(withName: doorName, recursively: true) {
+                                    if openedLockers.contains(lockerName) {
+                                        print("🔁 Closing locker \(lockerName)")
+                                        let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
+                                        rotateAction.timingMode = .easeInEaseOut
+                                        doorNode.runAction(rotateAction)
+                                        SoundPlayer.shared.playSound(named: "locker.mp3", on: targetNode, volume: 0.7)
+                                        openedLockers.remove(lockerName)
+                                    } else {
+                                        print("🚪 Opening locker \(lockerName)")
+                                        let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 0.5)
+                                        rotateAction.timingMode = .easeInEaseOut
+                                        doorNode.runAction(rotateAction)
+                                        SoundPlayer.shared.playSound(named: "locker.mp3", on: targetNode, volume: 0.7)
+                                        openedLockers.insert(lockerName)
+                                    }
+                                    
+                                    // ✅ Prevent further interaction (e.g., showing FocusObjectView)
+                                    return
+                                }
+                            }
+                            
+                            if nodeName == "Door"{
+                                let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
+                                rotateAction.timingMode = .easeInEaseOut
+                                targetNode.runAction(rotateAction)
+                                return
+                            }
+                            
+                            if nodeName.contains("Microscope") {
+                                if inventory.contains(where: { $0.contains("Clue_color") }) {
+                                    showMicroscope = true
+                                    return
+                                }
+                            }
+                            
+                            if cabinetNames.contains(nodeName) {
+                                if openedCabinets.contains(nodeName) {
+                                    // 🔁 Cabinet is already open — close it
+                                    print("🔁 Closing cabinet \(nodeName)")
+                                    let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
+                                    moveAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(moveAction)
+                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
+                                    openedCabinets.remove(nodeName)
+                                } else {
+                                    // 🚪 Cabinet is closed — open it
+                                    print("🚪 Opening cabinet \(nodeName)")
+                                    let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
+                                    moveAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(moveAction)
+                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
+                                    openedCabinets.insert(nodeName)
+                                }
+                                return
+                            }
+                            
+                            DispatchQueue.main.async {
+                                focusedObject = FocusedObject(name: nodeName)
+                                showFocusObjectView = true
+                            }
+                        } else {
+                            print("❌ No suitable node found to focus")
+                        }
+                        
+                    } else {
+                        print("🔎 Processing tap while ZOOMED OUT - will zoom to node")
+                        zoomToNode(tappedNode)
+                    }
+                }
             }
             .simultaneousGesture(
                 // Drag gesture for rotation
-                DragGesture()
+                isZooming ? nil : DragGesture()
                     .onChanged { value in
                         if isZoomedIn {
                             // Orbital rotation when zoomed in
-                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.01
-                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.01
+                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.005
+                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.005
                             
                             // Apply horizontal rotation and clamp it
                             orbitalAngleHorizontal += deltaX
                             orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
                                                          min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
-
+                            
                             // Apply vertical rotation and clamp it
-                            let verticalLimit: Float = .pi / 6 // Still 30 degrees for vertical
+                            let verticalLimit: Float = .pi // Still 30 degrees for vertical
                             orbitalAngleVertical += deltaY
                             orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
-
+                            
                             updateOrbitalCamera()
-
+                            
                             lastDragTranslationX = value.translation.width
                             lastDragTranslationY = value.translation.height
                         } else {
@@ -82,22 +231,27 @@ struct InGameView: View {
                     }
             )
             .simultaneousGesture(
-                // Pinch gesture for zoom in/out when zoomed in
-                MagnificationGesture()
+                isZooming ? nil : MagnificationGesture()
                     .onChanged { value in
                         guard isZoomedIn else { return }
-                        
-                        // Adjust orbital radius based on pinch
-                        // Note: Value is typically 1.0 for no change, >1.0 for zoom in, <1.0 for zoom out.
-                        // You might want to adjust the multiplier based on desired sensitivity.
-                        let newRadius = orbitalRadius / Float(value)
-                        orbitalRadius = max(1.0, min(10.0, newRadius)) // Clamp between 1 and 10
-                        
+                        let zoomSensitivity: Float = 0.1
+                        let scaleChange = Float(value - 1.0) * zoomSensitivity
+                        let newRadius = orbitalRadius * (1.0 - scaleChange)
+                        orbitalRadius = max(1.0, min(5.0, newRadius))
                         updateOrbitalCamera()
                     }
             )
             
-            // Overlay for back button when zoomed in
+            HStack {
+                Spacer()
+                VStack{
+                    ForEach(inventory, id: \.self) { item in
+                        Inventory(level: level.sceneFile, nodeName: item, isFlashlightOn: .constant(false))
+                    }
+                }
+            }
+            .padding(24)
+            
             if isZoomedIn {
                 VStack {
                     Spacer()
@@ -106,11 +260,11 @@ struct InGameView: View {
                             zoomOut()
                         }) {
                             Text("Back")
-                                .padding(.horizontal, 48)
+                                .padding(.horizontal, 120)
                                 .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.2))
+                                .background(Color.black.opacity(0.4))
                                 .foregroundColor(.white)
-                                .cornerRadius(8)
+                                .cornerRadius(12)
                         }
                     }
                 }
@@ -125,9 +279,16 @@ struct InGameView: View {
         }
         .onAppear {
             setupScene()
+            BackgroundMusicPlayer.shared.play(filename: "tensemusic")
         }
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
+        .fullScreenCover(item: $focusedObject) { object in
+            FocusObjectView(sceneFile: level.sceneFile, nodeName: object.name, inventory: $inventory)
+        }
+        .fullScreenCover(isPresented: $showMicroscope) {
+            MicroscopeView(sceneFile: level.sceneFile, inventory: $inventory)
+        }
     }
     
     private func setupScene() {
@@ -141,8 +302,8 @@ struct InGameView: View {
         
         // Camera setting
         let camera = SCNCamera()
-        camera.zNear = 1
-        camera.zFar = 200
+        camera.zNear = 0.01
+        camera.zFar = 100
         camera.focalLength = 120
         camera.fStop = 1.8
         camera.focusDistance = 3
@@ -151,8 +312,6 @@ struct InGameView: View {
         cameraNode.camera = camera
         cameraNode.position = originalCameraPosition
         cameraNode.look(at: SCNVector3(0, 0.9, 0))
-        
-        // Store original camera euler angles (better than rotation for restoration)
         originalCameraEulerAngles = cameraNode.eulerAngles
         
         loadedScene.rootNode.addChildNode(cameraNode)
@@ -168,18 +327,16 @@ struct InGameView: View {
     private func updateOrbitalCamera() {
         guard let cameraNode = cameraNode else { return }
         
-        // Calculate new camera position based on orbital angles and radius
         let x = orbitalTarget.x + orbitalRadius * cos(orbitalAngleVertical) * sin(orbitalAngleHorizontal)
         let y = orbitalTarget.y + orbitalRadius * sin(orbitalAngleVertical)
         let z = orbitalTarget.z + orbitalRadius * cos(orbitalAngleVertical) * cos(orbitalAngleHorizontal)
         
         let newPosition = SCNVector3(x: x, y: y, z: z)
         
-        // Smoothly update camera position and look at target
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.1
         cameraNode.position = newPosition
-        cameraNode.look(at: orbitalTarget) // This handles the orientation, preventing roll and undesired pitch/yaw
+        cameraNode.look(at: orbitalTarget)
         SCNTransaction.commit()
     }
     
@@ -216,13 +373,6 @@ struct InGameView: View {
         return nil
     }
     
-    private func zoomToZone(_ zone: InteractionZone) {
-        var zoomPosition = zone.centerPosition
-        zoomPosition.y += zone.heightOffset
-        
-        zoomToPoint(zoomPosition, distance: zone.zoomDistance, nodeName: zone.name)
-    }
-
     private func zoomToNode(_ node: SCNNode) {
         let nodePosition = node.worldPosition
         
@@ -236,7 +386,7 @@ struct InGameView: View {
         
         // Calculate appropriate distance based on object size
         let maxDimension = Swift.max(Swift.max(size.x, size.y), size.z)
-        let distance = Swift.max(maxDimension * 2.5, 3.0) // Minimum distance of 3 units
+        let distance = Swift.max(maxDimension * 2.5, 5.0) // Minimum distance of 3 units
         
         // Special case for Cabinet_1 - move camera up by 1 unit on Y-axis
         var adjustedPosition = nodePosition
@@ -247,9 +397,11 @@ struct InGameView: View {
         
         zoomToPoint(adjustedPosition, distance: distance, nodeName: node.name)
     }
-    // Updated zoomToPoint to set up orbital camera
+    
     private func zoomToPoint(_ point: SCNVector3, distance: Float = 3.0, nodeName: String? = nil) {
         guard let cameraNode = cameraNode else { return }
+        
+        isZooming = true
         
         print("Zooming to point: \(point)")
         
@@ -293,17 +445,11 @@ struct InGameView: View {
         }
         
         // Position camera in front of the target object
-        var newCameraPosition = SCNVector3(
+        let newCameraPosition = SCNVector3(
             x: point.x - direction.x * distance,
             y: point.y - direction.y * distance,
             z: point.z - direction.z * distance
         )
-        
-        // Special adjustment for Cabinet_1
-        if nodeName == "Cabinet_1" {
-            newCameraPosition.y += 0.0
-            print("Additional camera height adjustment for Cabinet_1")
-        }
         
         print("Moving camera from \(cameraNode.position) to \(newCameraPosition)")
         
@@ -334,6 +480,10 @@ struct InGameView: View {
             DispatchQueue.main.async {
                 print("Zoom completed - Orbital camera ready")
                 self.isZoomedIn = true
+                self.isZooming = false
+                
+                self.lastDragTranslationX = 0
+                self.lastDragTranslationY = 0
             }
         }
     }
@@ -348,26 +498,29 @@ struct InGameView: View {
         orbitalAngleHorizontal = 0.0
         orbitalAngleVertical = 0.0
         
-        // Create smooth move animation
-        let moveAction = SCNAction.move(to: originalCameraPosition, duration: 1.0)
-        moveAction.timingMode = .easeInEaseOut
+        isZooming = true
         
-        // Alternative: Use the stored original euler angles
-        let restoreOrientationAction = SCNAction.run { _ in
-            cameraNode.eulerAngles = self.originalCameraEulerAngles
-        }
+        // Begin smooth camera transition
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 1.0
         
-        let zoomOutSequence = SCNAction.sequence([
-            SCNAction.group([moveAction]), // Group can be used if you want to run other animations concurrently
-            restoreOrientationAction
-        ])
+        // Set the final position and rotation smoothly
+        cameraNode.position = originalCameraPosition
+        cameraNode.eulerAngles = originalCameraEulerAngles
         
-        cameraNode.runAction(zoomOutSequence) {
+        print("Camera position during zoom out: \(cameraNode.position)")
+        print("Camera eulerAngles during zoom out: \(cameraNode.eulerAngles)")
+        
+        SCNTransaction.completionBlock = {
             DispatchQueue.main.async {
                 print("Zoom out completed")
                 self.isZoomedIn = false
+                isZooming = false
             }
         }
+        
+        SCNTransaction.commit()
+        
     }
 }
 

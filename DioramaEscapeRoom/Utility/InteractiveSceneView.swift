@@ -11,14 +11,17 @@ import SceneKit
 
 struct InteractiveSceneView: UIViewRepresentable {
     let scene: SCNScene?
+    let enableDefaultLighting: Bool
     let onNodeTapped: (SCNNode) -> Void
 
     func makeUIView(context: Context) -> SCNView {
         let scnView = SCNView()
         scnView.scene = scene
         scnView.allowsCameraControl = false
-        scnView.autoenablesDefaultLighting = false
+        scnView.autoenablesDefaultLighting = enableDefaultLighting
+        scnView.antialiasingMode = .multisampling4X
         scnView.backgroundColor = .clear
+        scnView.isOpaque = false
 
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
         scnView.addGestureRecognizer(tapGesture)

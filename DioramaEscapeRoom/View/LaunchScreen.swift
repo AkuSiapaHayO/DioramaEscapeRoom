@@ -14,7 +14,7 @@ struct LaunchScreen: View {
             VStack{
                 Image("LockedIn Logo")
                     .resizable()
-                    .frame(width: 500, height: 180)
+                    .frame(width: 507, height: 180)
                 Text("One Room. One Exit. Infinite Possibilites")
                     .foregroundColor(Color.white)
                     .font(.system(size: 20, weight: .light, design: .default))

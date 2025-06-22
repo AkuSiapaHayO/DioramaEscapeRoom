@@ -46,7 +46,7 @@ struct LevelViewComponent: View {
                 scene.lightingEnvironment.contents = nil
                 
                 return scene
-            }())
+            }(), enableDefaultLighting: false)
             .frame(width: 300, height: 200)
             .cornerRadius(12)
 
@@ -55,5 +55,5 @@ struct LevelViewComponent: View {
 }
 
 #Preview {
-    LevelViewComponent(level: Level(id: 1, name: "Test Level", sceneFile: "Level1.scn"))
+    LevelViewComponent(level: Level(id: 1, name: "Test Level", sceneFile: "Science Lab Updated.scn"))
 }
