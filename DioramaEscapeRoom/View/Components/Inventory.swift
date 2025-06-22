@@ -11,6 +11,7 @@ import SceneKit
 struct Inventory: View {
     let level: String
     let nodeName: String
+    @Binding var isFlashlightOn: Bool
     
     var scale: CGFloat {
         switch nodeName {
@@ -101,12 +102,18 @@ struct Inventory: View {
             .cornerRadius(12)
         }
         .padding(paddingAmount)
-        .background(Color.black.opacity(0.4))
+        .background(Color.gray.opacity(0.4))
         .cornerRadius(12)
+        .onTapGesture {
+            if nodeName == "UV_Flashlight" {
+                isFlashlightOn.toggle()
+                print("🔦 UV Flashlight toggled: \(isFlashlightOn)")
+            }
+        }
     }
 }
 
 #Preview {
-    Inventory(level: "Science Lab Updated.scn", nodeName: "UV_Flashlight")
+    Inventory(level: "Science Lab Updated.scn", nodeName: "UV_Flashlight", isFlashlightOn: .constant(false))
 }
 
