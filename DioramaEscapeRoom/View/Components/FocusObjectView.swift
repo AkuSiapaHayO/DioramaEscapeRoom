@@ -17,6 +17,8 @@ struct FocusObjectView: View {
     
     @State private var hasBookOpened = false
     @State private var openedFlasks: Set<String> = []
+    @State private var isUVLightOn = false
+
     
     @State private var passcodeInput: String = ""
 
@@ -59,6 +61,9 @@ struct FocusObjectView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onChange(of: isUVLightOn) { _ in
+                updateFlashlight()
+            }
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -168,14 +173,18 @@ struct FocusObjectView: View {
                 HStack {
                     Spacer()
                     VStack{
-                        Inventory(level: sceneFile, nodeName: "UV_Flashlight")
-                        Inventory(level: sceneFile, nodeName: "Golden_Key")
+                        Inventory(level: sceneFile, nodeName: "UV_Flashlight", isFlashlightOn: $isUVLightOn)
+
+                        // In Inventory, pass a binding
+                        Inventory(level: sceneFile, nodeName: "Golden_Key", isFlashlightOn: $isUVLightOn)
+
                     }
                 }
                 .padding(24)
             }
         }
     }
+
     
     func printAllNodeNames(node: SCNNode, indent: String = "") {
         if let name = node.name {
@@ -320,6 +329,7 @@ struct FocusObjectView: View {
         rotationY = objectNode.eulerAngles.y
         rotationZ = objectNode.eulerAngles.z
     }
+    
 
 
     private func updateTransform() {
@@ -409,7 +419,30 @@ struct FocusObjectView: View {
             return nil
         }
     }
+    
+    private func updateFlashlight() {
+        // Remove any existing spotlight
+        scene.rootNode.childNodes.filter { $0.name == "UVSpotlight" }.forEach { $0.removeFromParentNode() }
 
+        guard isUVLightOn else { return }
+
+        let spotlightNode = SCNNode()
+        spotlightNode.name = "UVSpotlight"
+        
+        let spotlight = SCNLight()
+        spotlight.type = .spot
+        spotlight.color = UIColor.purple
+        spotlight.intensity = 1000
+        spotlight.spotInnerAngle = 0
+        spotlight.spotOuterAngle = 23
+        spotlight.castsShadow = true
+        spotlightNode.light = spotlight
+
+        spotlightNode.position = SCNVector3(x: 0, y: 0, z: zoom / 1.5)
+        spotlightNode.look(at: SCNVector3Zero)
+        
+        scene.rootNode.addChildNode(spotlightNode)
+    }
 }
 
 #Preview {

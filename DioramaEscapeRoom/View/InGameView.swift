@@ -229,8 +229,8 @@ struct InGameView: View {
             HStack {
                 Spacer()
                 VStack{
-                    Inventory(level: level.sceneFile, nodeName: "UV_Flashlight")
-                    Inventory(level: level.sceneFile, nodeName: "Golden_Key")
+                    Inventory(level: level.sceneFile, nodeName: "UV_Flashlight", isFlashlightOn: .constant(false))
+                    Inventory(level: level.sceneFile, nodeName: "Golden_Key", isFlashlightOn: .constant(false))
                 }
             }
             .padding(24)
