@@ -57,6 +57,7 @@ struct ExitButtonComponent: View {
                     HStack(spacing: 24) {
                         Button("Exit") {
                             withAnimation {
+                                BackgroundMusicPlayer.shared.stop()
                                 dismiss()
                             }
                         }

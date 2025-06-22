@@ -84,10 +84,10 @@ struct InGameView: View {
                             let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001", "Tubes_1"]
                             
                             let untappableObjectNames = [
-                                "Window","Floor", "Tiles"
+                                "Window","Floor", "Tiles", "Table", "Table_2", "Small_Table"
                             ]
                             
-                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Table_") || nodeName.contains("Tube"){
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Drawer") || nodeName.contains("Tube"){
                                 return
                             }
                             
@@ -125,12 +125,14 @@ struct InGameView: View {
                                         let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
                                         rotateAction.timingMode = .easeInEaseOut
                                         doorNode.runAction(rotateAction)
+                                        SoundPlayer.shared.playSound(named: "locker.mp3", on: targetNode, volume: 0.7)
                                         openedLockers.remove(lockerName)
                                     } else {
                                         print("🚪 Opening locker \(lockerName)")
                                         let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 0.5)
                                         rotateAction.timingMode = .easeInEaseOut
                                         doorNode.runAction(rotateAction)
+                                        SoundPlayer.shared.playSound(named: "locker.mp3", on: targetNode, volume: 0.7)
                                         openedLockers.insert(lockerName)
                                     }
                                     
@@ -160,6 +162,7 @@ struct InGameView: View {
                                     let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
                                     moveAction.timingMode = .easeInEaseOut
                                     targetNode.runAction(moveAction)
+                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
                                     openedCabinets.remove(nodeName)
                                 } else {
                                     // 🚪 Cabinet is closed — open it
@@ -167,6 +170,7 @@ struct InGameView: View {
                                     let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
                                     moveAction.timingMode = .easeInEaseOut
                                     targetNode.runAction(moveAction)
+                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
                                     openedCabinets.insert(nodeName)
                                 }
                                 return
@@ -275,6 +279,7 @@ struct InGameView: View {
         }
         .onAppear {
             setupScene()
+            BackgroundMusicPlayer.shared.play(filename: "tensemusic")
         }
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
