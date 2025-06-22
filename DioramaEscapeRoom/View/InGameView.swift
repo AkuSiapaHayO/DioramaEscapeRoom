@@ -11,6 +11,7 @@ import SceneKit
 struct InGameView: View {
     @State private var focusedObject: FocusedObject? = nil
     @State private var showFocusObjectView = false
+    @State private var showMicroscope = false
     @State private var openedCabinets: Set<String> = []
     @State private var openedLockers: Set<String> = []
     @State var inventory: [String] = []
@@ -143,6 +144,13 @@ struct InGameView: View {
                                 rotateAction.timingMode = .easeInEaseOut
                                 targetNode.runAction(rotateAction)
                                 return
+                            }
+                            
+                            if nodeName.contains("Microscope") {
+                                if inventory.contains(where: { $0.contains("Clue_color") }) {
+                                    showMicroscope = true
+                                    return
+                                }
                             }
                             
                             if cabinetNames.contains(nodeName) {
@@ -280,6 +288,9 @@ struct InGameView: View {
         .navigationBarBackButtonHidden(true)
         .fullScreenCover(item: $focusedObject) { object in
             FocusObjectView(sceneFile: level.sceneFile, nodeName: object.name, inventory: $inventory)
+        }
+        .fullScreenCover(isPresented: $showMicroscope) {
+            MicroscopeView(sceneFile: level.sceneFile, inventory: $inventory)
         }
     }
     
