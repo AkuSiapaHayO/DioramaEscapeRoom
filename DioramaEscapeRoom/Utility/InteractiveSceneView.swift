@@ -21,6 +21,7 @@ struct InteractiveSceneView: UIViewRepresentable {
         scnView.autoenablesDefaultLighting = enableDefaultLighting
         scnView.antialiasingMode = .multisampling4X
         scnView.backgroundColor = .clear
+        scnView.isOpaque = false
 
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
         scnView.addGestureRecognizer(tapGesture)
