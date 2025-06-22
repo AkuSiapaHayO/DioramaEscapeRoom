@@ -176,7 +176,7 @@ struct FocusObjectView: View {
                     Spacer()
                     VStack{
                         ForEach(inventory, id: \.self) { item in
-                            Inventory(level: sceneFile, nodeName: item, isFlashlightOn: .constant(false))
+                            Inventory(level: sceneFile, nodeName: item, isFlashlightOn: $isUVLightOn)
                         }
                     }
                 }
@@ -210,7 +210,6 @@ struct FocusObjectView: View {
             "Willas___Hayya",
             "Paper_2",
             "Paper_1",
-            "Photo_4",
             "Window",
         ]
         let rotation2: Set<String> = [
@@ -246,7 +245,7 @@ struct FocusObjectView: View {
             "Flask_2",
             "Flask_3",
             "Flask_4",
-            "Passcode_1"
+            "Passcode_1",
         ]
         
         let rotation7: Set<String> = [
@@ -255,7 +254,11 @@ struct FocusObjectView: View {
         ]
         
         let rotation8: Set<String> = [
-            "Riddle_1"
+            "Riddle_1",
+        ]
+        
+        let rotation9: Set<String> = [
+            "Photo_4",
         ]
         
         scene = SCNScene()
@@ -278,14 +281,23 @@ struct FocusObjectView: View {
         } else if rotation6.contains(nodeName) {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: .pi, z: .pi)
         } else if rotation7.contains(nodeName) {
-            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: .pi)
+            objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         } else if rotation8.contains(nodeName) {
-            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: -.pi/2)
-        } else {
+            objectNode.eulerAngles = SCNVector3(x: -.pi/2, y: 4.6, z: 0)
+        } else if rotation9.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: .pi/2)
+       } else {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         }
         
         objectNode.scale = SCNVector3(x: 1, y: 1, z: 1)
+        
+        objectNode.enumerateChildNodes { child, _ in
+            if let name = child.name, name.starts(with: "Hint_") {
+                child.isHidden = true
+                print("🙈 Recursively hiding \(name) on setup")
+            }
+        }
 
         // Calculate bounding box and pivot
         let (minBox, maxBox) = objectNode.boundingBox
@@ -333,8 +345,6 @@ struct FocusObjectView: View {
         rotationY = objectNode.eulerAngles.y
         rotationZ = objectNode.eulerAngles.z
     }
-    
-
 
     private func updateTransform() {
         objectNode.eulerAngles = SCNVector3(rotationX, rotationY, rotationZ)
@@ -418,7 +428,7 @@ struct FocusObjectView: View {
         case "Orange_Book":
             return hasBookOpened ? "Tap to fold" : "Tap to unfold"
         case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
-            return openedFlasks.contains(nodeName) ? "Tap to close" : "Tap to rotate flask"
+            return openedFlasks.contains(nodeName) ? "Tap to rotate back" : "Tap to rotate flask"
         case "Microscope_1", "Microscope_2", "Microscope_3":
             return "Find a blank paper to view in the microscope"
         default:
@@ -429,7 +439,14 @@ struct FocusObjectView: View {
     private func updateFlashlight() {
         // Remove any existing spotlight
         scene.rootNode.childNodes.filter { $0.name == "UVSpotlight" }.forEach { $0.removeFromParentNode() }
-
+        
+        objectNode.enumerateChildNodes { child, _ in
+            if let name = child.name, name.starts(with: "Hint_") {
+                child.isHidden = !isUVLightOn
+                print("🙈 Showing \(name)")
+            }
+        }
+        
         guard isUVLightOn else { return }
 
         let spotlightNode = SCNNode()
@@ -452,5 +469,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Microscope_1", inventory: .constant(["UV_Flashlight"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Photo_4", inventory: .constant(["UV_Flashlight"]))
 }
