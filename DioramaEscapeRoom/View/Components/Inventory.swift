@@ -52,10 +52,12 @@ struct Inventory: View {
                 objectNode.position = SCNVector3Zero
                 
                 // Apply rotation
-                if nodeName == "Golden_Key" || nodeName == "Clue_color" {
+                if nodeName == "Golden_Key"  {
                     objectNode.eulerAngles = SCNVector3Zero
                 } else if nodeName == "UV_Flashlight" {
                     objectNode.eulerAngles = SCNVector3(x: .pi/4, y: 0, z: .pi*3/4)
+                } else if nodeName == "Clue_color" {
+                    objectNode.eulerAngles = SCNVector3(x: 0, y: -.pi, z: 0)
                 }else {
                     objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
                 }

@@ -114,6 +114,8 @@ struct FocusObjectView: View {
             if let text = instructionText {
                 HStack {
                     Text(text)
+                        .multilineTextAlignment(.center)
+                        .frame(width: 200)
                         .padding()
                         .foregroundColor(.white)
                         .cornerRadius(12)
@@ -417,6 +419,8 @@ struct FocusObjectView: View {
             return hasBookOpened ? "Tap to fold" : "Tap to unfold"
         case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
             return openedFlasks.contains(nodeName) ? "Tap to close" : "Tap to rotate flask"
+        case "Microscope_1", "Microscope_2", "Microscope_3":
+            return "Find a blank paper to view in the microscope"
         default:
             return nil
         }
@@ -448,5 +452,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Riddle_1", inventory: .constant(["UV_Flashlight"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Microscope_1", inventory: .constant(["UV_Flashlight"]))
 }
