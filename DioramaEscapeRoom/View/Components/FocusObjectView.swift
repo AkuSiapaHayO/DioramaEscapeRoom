@@ -4,6 +4,7 @@ import SceneKit
 struct FocusObjectView: View {
     let sceneFile: String
     let nodeName: String
+    @Binding var inventory: [String]
     
     @Environment(\.dismiss) private var dismiss
 
@@ -18,7 +19,6 @@ struct FocusObjectView: View {
     @State private var hasBookOpened = false
     @State private var openedFlasks: Set<String> = []
     @State private var isUVLightOn = false
-
     
     @State private var passcodeInput: String = ""
 
@@ -173,11 +173,9 @@ struct FocusObjectView: View {
                 HStack {
                     Spacer()
                     VStack{
-                        Inventory(level: sceneFile, nodeName: "UV_Flashlight", isFlashlightOn: $isUVLightOn)
-
-                        // In Inventory, pass a binding
-                        Inventory(level: sceneFile, nodeName: "Golden_Key", isFlashlightOn: $isUVLightOn)
-
+                        ForEach(inventory, id: \.self) { item in
+                            Inventory(level: sceneFile, nodeName: item, isFlashlightOn: .constant(false))
+                        }
                     }
                 }
                 .padding(24)
@@ -200,7 +198,7 @@ struct FocusObjectView: View {
             print("Failed to load scene: \(sceneFile)")
             return
         }
-
+        
         guard let targetNode = sourceScene.rootNode.childNode(withName: nodeName, recursively: true) else {
             print("Could not find node: \(nodeName)")
             return
@@ -212,7 +210,6 @@ struct FocusObjectView: View {
             "Paper_1",
             "Photo_4",
             "Window",
-            "Riddle_1",
         ]
         let rotation2: Set<String> = [
             "Periodic_Table",
@@ -225,7 +222,6 @@ struct FocusObjectView: View {
             "Red_Book_1",
             "Red_Book_3",
             "Photo_2",
-            "Orange_Book",
         ]
         let rotation3: Set<String> = [
             "Calendar",
@@ -256,6 +252,10 @@ struct FocusObjectView: View {
             "Riddle_3"
         ]
         
+        let rotation8: Set<String> = [
+            "Riddle_1"
+        ]
+        
         scene = SCNScene()
         scene.background.contents = UIColor.clear
 
@@ -277,6 +277,8 @@ struct FocusObjectView: View {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: .pi, z: .pi)
         } else if rotation7.contains(nodeName) {
             objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: .pi)
+        } else if rotation8.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: -.pi/2)
         } else {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         }
@@ -446,5 +448,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Flask_1")
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Riddle_1", inventory: .constant(["UV_Flashlight"]))
 }
