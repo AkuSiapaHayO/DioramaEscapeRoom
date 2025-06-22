@@ -13,6 +13,7 @@ struct InGameView: View {
     @State private var showFocusObjectView = false
     @State private var openedCabinets: Set<String> = []
     @State private var openedLockers: Set<String> = []
+    @State var inventory: [String] = []
     
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
@@ -46,8 +47,8 @@ struct InGameView: View {
                 // ALWAYS print debug info first, regardless of zoom state
                 
                 if isZooming {
-                        print("⏳ Ignoring tap - currently zooming")
-                        return
+                    print("⏳ Ignoring tap - currently zooming")
+                    return
                 } else {
                     if isZoomedIn {
                         print("🔍 Processing tap while ZOOMED IN")
@@ -86,6 +87,15 @@ struct InGameView: View {
                             ]
                             
                             if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Table_") || nodeName.contains("Tube"){
+                                return
+                            }
+                            
+                            if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
+                                inventory.append(nodeName)
+                                if let scene = scene, // unwrap the optional scene
+                                   let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
+                                    targetNode.isHidden = true
+                                }
                                 return
                             }
                             
@@ -229,12 +239,13 @@ struct InGameView: View {
             HStack {
                 Spacer()
                 VStack{
-                    Inventory(level: level.sceneFile, nodeName: "UV_Flashlight", isFlashlightOn: .constant(false))
-                    Inventory(level: level.sceneFile, nodeName: "Golden_Key", isFlashlightOn: .constant(false))
+                    ForEach(inventory, id: \.self) { item in
+                        Inventory(level: level.sceneFile, nodeName: item, isFlashlightOn: .constant(false))
+                    }
                 }
             }
             .padding(24)
-           
+            
             
             // Overlay for back button when zoomed in
             if isZoomedIn {
@@ -268,7 +279,7 @@ struct InGameView: View {
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
         .fullScreenCover(item: $focusedObject) { object in
-            FocusObjectView(sceneFile: level.sceneFile, nodeName: object.name)
+            FocusObjectView(sceneFile: level.sceneFile, nodeName: object.name, inventory: $inventory)
         }
     }
     
@@ -371,7 +382,7 @@ struct InGameView: View {
         
         // Calculate appropriate distance based on object size
         let maxDimension = Swift.max(Swift.max(size.x, size.y), size.z)
-        let distance = Swift.max(maxDimension * 2.5, 3.0) // Minimum distance of 3 units
+        let distance = Swift.max(maxDimension * 2.5, 5.0) // Minimum distance of 3 units
         
         // Special case for Cabinet_1 - move camera up by 1 unit on Y-axis
         var adjustedPosition = nodePosition
@@ -466,7 +477,7 @@ struct InGameView: View {
                 print("Zoom completed - Orbital camera ready")
                 self.isZoomedIn = true
                 self.isZooming = false
-
+                
                 // ✅ Reset translation to prevent jump
                 self.lastDragTranslationX = 0
                 self.lastDragTranslationY = 0

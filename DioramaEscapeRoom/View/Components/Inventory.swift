@@ -17,6 +17,7 @@ struct Inventory: View {
         switch nodeName {
         case "UV_Flashlight": return 0.3
         case "Golden_Key": return 0.3
+        case "Clue_color": return 0.3
         default: return 0.3
         }
     }
@@ -51,11 +52,11 @@ struct Inventory: View {
                 objectNode.position = SCNVector3Zero
                 
                 // Apply rotation
-                if nodeName == "Golden_Key" {
+                if nodeName == "Golden_Key" || nodeName == "Clue_color" {
                     objectNode.eulerAngles = SCNVector3Zero
                 } else if nodeName == "UV_Flashlight" {
                     objectNode.eulerAngles = SCNVector3(x: .pi/4, y: 0, z: .pi*3/4)
-                } else {
+                }else {
                     objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
                 }
                 
@@ -114,6 +115,6 @@ struct Inventory: View {
 }
 
 #Preview {
-    Inventory(level: "Science Lab Updated.scn", nodeName: "UV_Flashlight", isFlashlightOn: .constant(false))
+    Inventory(level: "Science Lab Updated.scn", nodeName: "Clue_color", isFlashlightOn: .constant(false))
 }
 
