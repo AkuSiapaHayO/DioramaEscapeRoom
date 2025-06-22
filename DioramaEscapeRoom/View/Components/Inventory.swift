@@ -101,7 +101,7 @@ struct Inventory: View {
             .cornerRadius(12)
         }
         .padding(paddingAmount)
-        .background(Color.black.opacity(0.4))
+        .background(Color.gray.opacity(0.4))
         .cornerRadius(12)
     }
 }

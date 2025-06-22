@@ -51,7 +51,7 @@ struct FocusObjectView: View {
                     switch nodeName {
                     case "Orange_Book":
                         toggleOrangeBook()
-                    case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
+                    case "Flask_1", "Flask_2", "Flask_3", "Flask_4", "Hint_1", "Hint_2", "Hint_3", "Hint_4":
                         toggleFlask(flaskName: nodeName)
                     default:
                         break
@@ -108,60 +108,71 @@ struct FocusObjectView: View {
             }
             if let text = instructionText {
                 HStack {
-                    Spacer()
                     Text(text)
                         .padding()
                         .foregroundColor(.white)
                         .cornerRadius(12)
                         .transition(.opacity)
                         .animation(.easeInOut, value: text)
+                    Spacer()
                 }
             }
             if nodeName.contains("Passcode") || nodeName.contains("Lock") {
                 HStack {
                     Spacer()
-                    VStack{
-                        Text("Passcode:")
-                            .font(.system(size:17, weight: .bold))
-                            .foregroundColor(.white)
-                        ZStack {
-                            // Centered passcode input text
-                            Text(passcodeInput)
-                                .font(.system(size: 23, weight: .regular))
-                            
-                            // Align the delete button to the right
-                            HStack {
-                                Spacer()
-                                Button(action: {
-                                    if !passcodeInput.isEmpty {
-                                        passcodeInput.removeLast()
-                                    }
-                                }) {
-                                    Image(systemName: "delete.left")
-                                        .tint(Color.red)
-                                }
-                                
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .frame(width: 180, height: 40)
-                        .background(Color.white)
-                        .cornerRadius(8)
-                        .padding(.bottom, 6)
-
-                        Button(action: {
-                            passcodeInput = ""
-                        }) {
-                            Text("Clear")
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 8)
-                                .font(.system(size:14, weight: .bold))
-                                .background(Color.red)
+                    VStack {
+                        VStack{
+                            Text("Passcode:")
+                                .font(.system(size:17, weight: .bold))
                                 .foregroundColor(.white)
-                                .cornerRadius(8)
+                            ZStack {
+                                // Centered passcode input text
+                                Text(passcodeInput)
+                                    .font(.system(size: 23, weight: .regular))
+                                
+                                // Align the delete button to the right
+                                HStack {
+                                    Spacer()
+                                    Button(action: {
+                                        if !passcodeInput.isEmpty {
+                                            passcodeInput.removeLast()
+                                        }
+                                    }) {
+                                        Image(systemName: "delete.left")
+                                            .tint(Color.red)
+                                    }
+                                    
+                                }
+                            }
+                            .padding(.horizontal, 8)
+                            .frame(width: 180, height: 40)
+                            .background(Color.white)
+                            .cornerRadius(8)
+                            .padding(.bottom, 6)
+                            
+                            Button(action: {
+                                passcodeInput = ""
+                            }) {
+                                Text("Clear")
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 8)
+                                    .font(.system(size:14, weight: .bold))
+                                    .background(Color.red)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
                         }
                     }
                 }
+            } else if nodeName == "Drawer_Lock" || nodeName.contains("Flask") {
+                HStack {
+                    Spacer()
+                    VStack{
+                        Inventory(level: sceneFile, nodeName: "UV_Flashlight")
+                        Inventory(level: sceneFile, nodeName: "Golden_Key")
+                    }
+                }
+                .padding(24)
             }
         }
     }
@@ -393,7 +404,7 @@ struct FocusObjectView: View {
         case "Orange_Book":
             return hasBookOpened ? "Tap to fold" : "Tap to unfold"
         case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
-            return openedFlasks.contains(nodeName) ? "Tap to unview" : "Tap to view code"
+            return openedFlasks.contains(nodeName) ? "Tap to close" : "Tap to rotate flask"
         default:
             return nil
         }
@@ -402,5 +413,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Passcode_1")
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Flask_1")
 }
