@@ -188,7 +188,7 @@ struct InGameView: View {
             }
             .simultaneousGesture(
                 // Drag gesture for rotation
-                DragGesture()
+                isZooming ? nil : DragGesture()
                     .onChanged { value in
                         if isZoomedIn {
                             // Orbital rotation when zoomed in
@@ -227,19 +227,13 @@ struct InGameView: View {
                     }
             )
             .simultaneousGesture(
-                // Pinch gesture for zoom in/out when zoomed in
-                MagnificationGesture()
+                isZooming ? nil : MagnificationGesture()
                     .onChanged { value in
                         guard isZoomedIn else { return }
-                        
-                        // Adjust orbital radius based on pinch
-                        // Note: Value is typically 1.0 for no change, >1.0 for zoom in, <1.0 for zoom out.
-                        // You might want to adjust the multiplier based on desired sensitivity.
-                        let zoomSensitivity: Float = 0.1 // Lower = less sensitive (try 0.2–0.5 for smooth control)
+                        let zoomSensitivity: Float = 0.1
                         let scaleChange = Float(value - 1.0) * zoomSensitivity
                         let newRadius = orbitalRadius * (1.0 - scaleChange)
                         orbitalRadius = max(1.0, min(5.0, newRadius))
-                        
                         updateOrbitalCamera()
                     }
             )
@@ -254,8 +248,6 @@ struct InGameView: View {
             }
             .padding(24)
             
-            
-            // Overlay for back button when zoomed in
             if isZoomedIn {
                 VStack {
                     Spacer()
@@ -315,8 +307,6 @@ struct InGameView: View {
         cameraNode.camera = camera
         cameraNode.position = originalCameraPosition
         cameraNode.look(at: SCNVector3(0, 0.9, 0))
-        
-        // Store original camera euler angles (better than rotation for restoration)
         originalCameraEulerAngles = cameraNode.eulerAngles
         
         loadedScene.rootNode.addChildNode(cameraNode)
@@ -332,18 +322,16 @@ struct InGameView: View {
     private func updateOrbitalCamera() {
         guard let cameraNode = cameraNode else { return }
         
-        // Calculate new camera position based on orbital angles and radius
         let x = orbitalTarget.x + orbitalRadius * cos(orbitalAngleVertical) * sin(orbitalAngleHorizontal)
         let y = orbitalTarget.y + orbitalRadius * sin(orbitalAngleVertical)
         let z = orbitalTarget.z + orbitalRadius * cos(orbitalAngleVertical) * cos(orbitalAngleHorizontal)
         
         let newPosition = SCNVector3(x: x, y: y, z: z)
         
-        // Smoothly update camera position and look at target
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.1
         cameraNode.position = newPosition
-        cameraNode.look(at: orbitalTarget) // This handles the orientation, preventing roll and undesired pitch/yaw
+        cameraNode.look(at: orbitalTarget)
         SCNTransaction.commit()
     }
     
@@ -489,7 +477,6 @@ struct InGameView: View {
                 self.isZoomedIn = true
                 self.isZooming = false
                 
-                // ✅ Reset translation to prevent jump
                 self.lastDragTranslationX = 0
                 self.lastDragTranslationY = 0
             }
@@ -499,14 +486,14 @@ struct InGameView: View {
     private func zoomOut() {
         guard let cameraNode = cameraNode else { return }
         
-        isZooming = true
-        
         print("Zooming out to original position: \(originalCameraPosition)")
         
         // Reset orbital parameters
         orbitalRadius = 3.0
         orbitalAngleHorizontal = 0.0
         orbitalAngleVertical = 0.0
+        
+        isZooming = true
         
         // Begin smooth camera transition
         SCNTransaction.begin()
@@ -523,11 +510,12 @@ struct InGameView: View {
             DispatchQueue.main.async {
                 print("Zoom out completed")
                 self.isZoomedIn = false
+                isZooming = false
             }
         }
         
         SCNTransaction.commit()
-        isZooming = false
+        
     }
 }
 
