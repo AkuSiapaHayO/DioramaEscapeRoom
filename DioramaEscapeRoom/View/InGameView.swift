@@ -85,7 +85,7 @@ struct InGameView: View {
                                 "Window","Floor", "Tiles"
                             ]
                             
-                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Table") || nodeName.contains("Tube"){
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Table_") || nodeName.contains("Tube"){
                                 return
                             }
                             
@@ -225,6 +225,16 @@ struct InGameView: View {
                         updateOrbitalCamera()
                     }
             )
+            
+            HStack {
+                Spacer()
+                VStack{
+                    Inventory(level: level.sceneFile, nodeName: "UV_Flashlight")
+                    Inventory(level: level.sceneFile, nodeName: "Golden_Key")
+                }
+            }
+            .padding(24)
+           
             
             // Overlay for back button when zoomed in
             if isZoomedIn {
@@ -420,7 +430,7 @@ struct InGameView: View {
         }
         
         // Position camera in front of the target object
-        var newCameraPosition = SCNVector3(
+        let newCameraPosition = SCNVector3(
             x: point.x - direction.x * distance,
             y: point.y - direction.y * distance,
             z: point.z - direction.z * distance

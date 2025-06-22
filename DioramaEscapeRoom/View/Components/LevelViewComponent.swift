@@ -46,7 +46,7 @@ struct LevelViewComponent: View {
                 scene.lightingEnvironment.contents = nil
                 
                 return scene
-            }())
+            }(), enableDefaultLighting: false)
             .frame(width: 300, height: 200)
             .cornerRadius(12)
 

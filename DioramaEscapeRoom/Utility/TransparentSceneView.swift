@@ -11,11 +11,13 @@ import SceneKit
 
 struct TransparentSceneView: UIViewRepresentable {
     let scene: SCNScene
+    let enableDefaultLighting: Bool
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
         view.scene = scene
         view.allowsCameraControl = false
+        view.autoenablesDefaultLighting = enableDefaultLighting
         view.backgroundColor = .clear    // ✅ Transparent
         view.isOpaque = false            // ✅ Required for transparency
         return view

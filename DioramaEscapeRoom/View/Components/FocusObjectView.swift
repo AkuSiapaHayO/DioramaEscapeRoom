@@ -22,12 +22,9 @@ struct FocusObjectView: View {
 
     var body: some View {
         ZStack {
-//            SceneView(
-//                scene: scene,
-//                options: [.autoenablesDefaultLighting],
-//                preferredFramesPerSecond: 60,
-//                antialiasingMode: .multisampling4X
-//            )
+            Color.black
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
             InteractiveSceneView(scene: scene, enableDefaultLighting: true) { tappedNode in
                 // Prefer parent node if it exists and has a name
                 let targetNode: SCNNode? = {
@@ -74,7 +71,7 @@ struct FocusObjectView: View {
             .gesture(
                 MagnificationGesture()
                     .onChanged { value in
-                        zoom = max(0.1, min(zoom / Float(value), 1.5))
+                        zoom = max(0.1, min(zoom / Float(value), 3.0))
                         updateCamera()
                     }
             )
@@ -240,7 +237,7 @@ struct FocusObjectView: View {
         ]
         
         scene = SCNScene()
-        scene.background.contents = UIColor.black
+        scene.background.contents = UIColor.clear
 
         // Prepare the object
         objectNode = targetNode.clone()
