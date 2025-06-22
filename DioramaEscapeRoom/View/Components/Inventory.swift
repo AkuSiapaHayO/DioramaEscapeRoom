@@ -12,6 +12,7 @@ struct Inventory: View {
     let level: String
     let nodeName: String
     @Binding var isFlashlightOn: Bool
+    var onTapAction: (() -> Void)? = nil
     
     var scale: CGFloat {
         switch nodeName {
@@ -111,12 +112,14 @@ struct Inventory: View {
             if nodeName == "UV_Flashlight" {
                 isFlashlightOn.toggle()
                 print("🔦 UV Flashlight toggled: \(isFlashlightOn)")
+            } else if nodeName == "Golden_Key"{
+                onTapAction?()
             }
         }
     }
 }
 
 #Preview {
-    Inventory(level: "Science Lab Updated.scn", nodeName: "Clue_color", isFlashlightOn: .constant(false))
+    Inventory(level: "Science Lab Updated.scn", nodeName: "Golden_Key", isFlashlightOn: .constant(false))
 }
 
