@@ -469,5 +469,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Photo_4", inventory: .constant(["UV_Flashlight"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Flask_1", inventory: .constant(["UV_Flashlight"]))
 }
