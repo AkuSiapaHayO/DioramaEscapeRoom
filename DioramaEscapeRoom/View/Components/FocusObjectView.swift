@@ -22,7 +22,6 @@ struct FocusObjectView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.5)
 //            SceneView(
 //                scene: scene,
 //                options: [.autoenablesDefaultLighting],
@@ -45,7 +44,7 @@ struct FocusObjectView: View {
 
                 print("🖱️ Tapped node: \(tappedName)")
 
-                if tappedName.starts(with: "Numpad_") {
+                if tappedName.starts(with: "Numpad_") || tappedName.starts(with: "Key_") {
                     if let digit = tappedName.components(separatedBy: "_").last {
                         passcodeInput.append(digit)
                         print("🔢 Passcode so far: \(passcodeInput)")
@@ -121,22 +120,49 @@ struct FocusObjectView: View {
                         .animation(.easeInOut, value: text)
                 }
             }
-            if nodeName == "Passcode_Machine" {
+            if nodeName.contains("Passcode") || nodeName.contains("Lock") {
                 HStack {
                     Spacer()
                     VStack{
                         Text("Passcode:")
                             .font(.system(size:17, weight: .bold))
                             .foregroundColor(.white)
-                        HStack{
+                        ZStack {
+                            // Centered passcode input text
                             Text(passcodeInput)
-                                .font(.system(size:23, weight: .regular))
+                                .font(.system(size: 23, weight: .regular))
+                            
+                            // Align the delete button to the right
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    if !passcodeInput.isEmpty {
+                                        passcodeInput.removeLast()
+                                    }
+                                }) {
+                                    Image(systemName: "delete.left")
+                                        .tint(Color.red)
+                                }
+                                
+                            }
                         }
-                        .frame(width: 150, height: 50)
+                        .padding(.horizontal, 8)
+                        .frame(width: 180, height: 40)
                         .background(Color.white)
-                        .cornerRadius(10)
-                        
-                        
+                        .cornerRadius(8)
+                        .padding(.bottom, 6)
+
+                        Button(action: {
+                            passcodeInput = ""
+                        }) {
+                            Text("Clear")
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 8)
+                                .font(.system(size:14, weight: .bold))
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
                     }
                 }
             }
@@ -205,12 +231,14 @@ struct FocusObjectView: View {
             "Flask_2",
             "Flask_3",
             "Flask_4",
+            "Passcode_1"
         ]
         
         let rotation7: Set<String> = [
             "Riddle_2",
             "Riddle_3"
         ]
+        
         scene = SCNScene()
         scene.background.contents = UIColor.black
 
@@ -377,5 +405,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Passcode_Machine")
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Passcode_1")
 }
