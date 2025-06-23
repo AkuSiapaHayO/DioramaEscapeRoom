@@ -213,7 +213,7 @@ struct InGameView: View {
                                     SoundPlayer.shared.playSound(named: "door.mp3", on: targetNode, volume: 0.7)
 
                                     // Wait 3 seconds before showing the popup
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                         showGameCompletedPopup = true
                                     }
 
@@ -247,6 +247,11 @@ struct InGameView: View {
                                     SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
                                     lockMessageText = "\(nodeName.replacingOccurrences(of: "_", with: " ")) is locked"
                                     showLockMessage = true
+                                    
+                                    // Automatically hide the message after 2 seconds
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                        showLockMessage = false
+                                    }
                                     return
                                 }
                                 if openedCabinets.contains(nodeName) {
@@ -343,7 +348,7 @@ struct InGameView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal)
                         .padding(.vertical, 6)
-                        .background(Color.black.opacity(0.2))
+                        .background(Color.black.opacity(0.3))
                         .cornerRadius(10)
                         .transition(.opacity)
                         .animation(.easeInOut(duration: 0.3), value: showLockMessage)
@@ -389,6 +394,7 @@ struct InGameView: View {
         }
         .onAppear {
             setupScene()
+            BackgroundMusicPlayer.shared.stop()
             BackgroundMusicPlayer.shared.play(filename: "mystery")
         }
         .ignoresSafeArea(.all)
@@ -407,6 +413,7 @@ struct InGameView: View {
     
     func exitToMainMenu() {
         BackgroundMusicPlayer.shared.stop()
+        BackgroundMusicPlayer.shared.play(filename: "mystery")
         dismiss()  // 👈 This will actually pop InGameView
     }
     

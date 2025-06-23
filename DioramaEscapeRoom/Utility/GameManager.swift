@@ -92,7 +92,7 @@ class GameManager: ObservableObject {
                 advanceTo(.puzzle4_done)
             }
         case .door:
-            if number == "1268" && currentState == .puzzle5_done {
+            if number == "2268" && currentState == .puzzle5_done {
                 advanceTo(.gameFinished)
             }
         }

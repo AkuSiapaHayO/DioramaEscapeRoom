@@ -5,31 +5,32 @@ struct GameCompletionPopUp: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "00D4DF"), Color(hex: "044948")]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .opacity(0.75)
-            .ignoresSafeArea()
+            Color.white
+                .ignoresSafeArea()
 
-            VStack(spacing: 24) {
+            VStack(spacing: 12) {
                 Text("Level Completed!")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.black)
 
-                Button("Back to Main Menu") {
-                    onBackToMenu()  // 👈 This tells InGameView to dismiss itself
+                HStack{
+                    Button("Return to Main Menu") {
+                        onBackToMenu()  // 👈 This tells InGameView to dismiss itself
+                    }
+                    .padding()
+                    .background(Color.cyan)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .fontWeight(.regular)
                 }
-                .padding()
-                .background(Color.cyan)
-                .foregroundColor(.black)
-                .cornerRadius(12)
-                .fontWeight(.regular)
             }
         }
     }
+}
+
+#Preview {
+    GameCompletionPopUp(onBackToMenu: { })
 }
 
 
