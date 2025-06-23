@@ -8,12 +8,12 @@
 import Foundation
 import SwiftUI
 
-enum GameProgressState {
-    case puzzle1_done
-    case puzzle3_done
-    case puzzle4_done
-    case puzzle5_done
-    case gameFinished
+enum GameProgressState: Int {
+    case puzzle1_done = 1
+    case puzzle3_done = 2
+    case puzzle4_done = 3
+    case puzzle5_done = 4
+    case gameFinished = 5
 }
 
 enum InputTarget {
@@ -22,6 +22,7 @@ enum InputTarget {
     case locker3
     case door
 }
+
 
 class GameManager: ObservableObject {
     @Published var currentState: GameProgressState? = nil
@@ -45,24 +46,24 @@ class GameManager: ObservableObject {
             }
 
         case "Locker_2":
-            if currentState == .puzzle1_done {
+            if currentState == .puzzle1_done || currentState == .puzzle3_done || currentState == .puzzle4_done || currentState == .puzzle5_done || currentState == .gameFinished {
                 showingNumberInput = true
                 inputTarget = .locker2
             }
 
         case "Locker_3":
-            if currentState == .puzzle3_done {
+            if currentState == .puzzle3_done || currentState == .puzzle4_done || currentState == .puzzle5_done || currentState == .gameFinished {
                 showingNumberInput = true
                 inputTarget = .locker3
             }
 
-        case "Cabiner_1", "Cabinet_2", "Cabinet_3":
-            if currentState == .puzzle4_done {
+        case "Cabinet_1", "Cabinet_2", "Cabinet_3":
+            if currentState == .puzzle4_done || currentState == .puzzle5_done || currentState == .gameFinished {
                 foundRiddle()
             }
-            
+
         case "Passcode_Machine":
-            if currentState == .puzzle5_done {
+            if currentState == .puzzle5_done || currentState == .gameFinished {
                 showingNumberInput = true
                 inputTarget = .door
             }
@@ -98,6 +99,15 @@ class GameManager: ObservableObject {
         showingNumberInput = false
         inputTarget = nil
     }
+    
+    func isPuzzleUnlocked(for requiredState: GameProgressState) -> Bool {
+        guard let current = currentState else { return false }
+        let order: [GameProgressState] = [.puzzle1_done, .puzzle3_done, .puzzle4_done, .puzzle5_done, .gameFinished]
+        guard let requiredIndex = order.firstIndex(of: requiredState),
+              let currentIndex = order.firstIndex(of: current) else { return false }
+        return currentIndex >= requiredIndex
+    }
+
 
     func foundRiddle() {
         if foundRiddleCount < 3 {

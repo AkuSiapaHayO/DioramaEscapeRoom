@@ -130,8 +130,9 @@ struct InGameView: View {
                             
                             if let locker = lockerNode, let lockerName = locker.name {
                                 
-                                if (lockerName == "Locker_1" && gameManager.currentState != .puzzle1_done) || (lockerName == "Locker_2" && gameManager.currentState != .puzzle3_done) ||
-                                       (lockerName == "Locker_3" && gameManager.currentState != .puzzle4_done) {
+                                if (lockerName == "Locker_1" && !gameManager.isPuzzleUnlocked(for: .puzzle1_done)) ||
+                                   (lockerName == "Locker_2" && !gameManager.isPuzzleUnlocked(for: .puzzle3_done)) ||
+                                   (lockerName == "Locker_3" && !gameManager.isPuzzleUnlocked(for: .puzzle4_done)) {
                                         print("🔒 \(lockerName) masih terkunci")
                                         SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.8)
                                         return
