@@ -41,7 +41,7 @@ struct HintButtonComponent: View {
                     .ignoresSafeArea()
                     .transition(.opacity)
 
-                VStack(spacing: 20) {
+                VStack(spacing: 8) {
                     Text("Hint")
                         .font(.title2)
                         .fontWeight(.bold)
@@ -51,6 +51,7 @@ struct HintButtonComponent: View {
                         .multilineTextAlignment(.center)
                         .foregroundColor(.white)
                         .padding(.horizontal)
+                        .padding(.bottom, 8)
 
                     Button("Close") {
                         withAnimation {
@@ -64,6 +65,7 @@ struct HintButtonComponent: View {
                     .cornerRadius(12)
                     .fontWeight(.bold)
                 }
+                .frame(width: 400)
                 .padding(24)
                 .background(
                     LinearGradient(
@@ -87,15 +89,15 @@ struct HintButtonComponent: View {
     func hint(for state: GameProgressState?) -> String {
         switch state {
         case nil:
-            return "“🧪 Important Dates. Some elements on that day might be something... aromatic.”"
+            return "Important Dates. Some elements on that day might be something... aromatic."
         case .puzzle1_done:
-            return "“You found the cup. Great. Now mix what’s under it with some light reading — preferably the kind that hides secrets between pages. ☕️📙”"
+            return "You found the cup. Great. Now mix what’s under it with some light reading — preferably the kind that hides secrets between pages."
         case .puzzle3_done:
-            return "“📄🔬🍷 Paper to scope. Light to flasks. Let there be numbers — just not in the wrong order.”"
+            return "Paper to scope. Light to flasks. Let there be numbers — just not in the wrong order.”"
         case .puzzle4_done:
-            return "The Key might open something.. something Shiny ✨"
+            return "The Key might open something.. something Shiny"
         case .puzzle5_done:
-            return "“Your key opened shelves, not answers. Solve the riddles, find the elements, then just do some basic chemistry math. 🔑🧪💧”"
+            return "Your key opened shelves, not answers. Solve the riddles, find the elements, then just do some basic chemistry math."
         case .gameFinished:
             return "Are you dumb? The Door is OPEN!!"
         }
