@@ -15,6 +15,8 @@ struct InGameView: View {
     @State private var openedCabinets: Set<String> = []
     @State private var openedLockers: Set<String> = []
     @State var inventory: [String] = []
+    @State var hasGottenClueColor = false
+    @State var hasDisplayedClue: Bool = false
     
     let level: Level
     @State private var lastDragTranslationX: CGFloat = 0.0
@@ -94,7 +96,7 @@ struct InGameView: View {
                             }
                             
                             if nodeName == "Paper_1" || nodeName == "Paper_2"  {
-                                SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 1.5)
+                                SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 3.0)
                             }
                             
                             print("🎯 Using node: \(nodeName)")
@@ -117,9 +119,10 @@ struct InGameView: View {
                             if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
                                 if gameManager.currentState == .puzzle3_done {
                                     if nodeName == "Clue_color" {
-                                        SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 1.5)
+                                        SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 4.0)
+                                        hasGottenClueColor = true
                                     } else if nodeName == "UV_Flashlight" {
-                                        SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 2.5)
+                                        SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 3.0)
                                     }
                                     inventory.append(nodeName)
                                     if let scene = scene, // unwrap the optional scene
@@ -234,7 +237,7 @@ struct InGameView: View {
                             }
                             
                             if nodeName.contains("Microscope") {
-                                if inventory.contains(where: { $0.contains("Clue_color") }) {
+                                if hasGottenClueColor {
                                     SoundPlayer.shared.playSound(named: "whoosh.mp3", on: targetNode, volume: 0.7)
                                     showMicroscope = true
                                     return
@@ -404,7 +407,7 @@ struct InGameView: View {
                 .environmentObject(gameManager)
         }
         .fullScreenCover(isPresented: $showMicroscope) {
-            MicroscopeView(sceneFile: level.sceneFile, inventory: $inventory)
+            MicroscopeView(sceneFile: level.sceneFile, inventory: $inventory, hasDisplayedClue: $hasDisplayedClue)
         }
         .fullScreenCover(isPresented: $showGameCompletedPopup) {
             GameCompletionPopUp(onBackToMenu: exitToMainMenu)

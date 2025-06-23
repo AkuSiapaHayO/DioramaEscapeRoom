@@ -114,6 +114,8 @@ struct Inventory: View {
                 print("🔦 UV Flashlight toggled: \(isFlashlightOn)")
             } else if nodeName == "Golden_Key"{
                 onTapAction?()
+            } else if nodeName == "Clue_color" {
+                onTapAction?()
             }
         }
     }
