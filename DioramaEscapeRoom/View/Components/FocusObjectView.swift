@@ -17,6 +17,7 @@ struct FocusObjectView: View {
     @State private var rotationY: Float = 0.0
     @State private var rotationZ: Float = .pi
     @State private var lastDragTranslation = CGSize.zero
+    @State private var lastScale: CGFloat = 1.0
     @State private var zoom: Float = 5.0
     
     @State private var hasBookOpened = false
@@ -102,28 +103,34 @@ struct FocusObjectView: View {
                 DragGesture()
                     .onChanged { value in
                         guard !["Flask_1", "Flask_2", "Flask_3", "Flask_4"].contains(nodeName) else { return }
-                        // Delta from last frame
+
                         let deltaX = Float(value.translation.width - lastDragTranslation.width)
                         let deltaY = Float(value.translation.height - lastDragTranslation.height)
-                        
-                        rotationY += deltaX * 0.01   // Try a slightly larger multiplier for smoother control
-                        rotationX += deltaY * 0.01
-                        
+
+                        rotationY -= deltaX * 0.01  // Horizontal swipe → Y-axis
+                        rotationX -= deltaY * 0.01  // Vertical swipe → X-axis
+
                         lastDragTranslation = value.translation
                         updateTransform()
                     }
-                    .onEnded{_ in
+                    .onEnded { _ in
                         lastDragTranslation = .zero
                     }
-                
             )
+
             .gesture(
                 MagnificationGesture()
                     .onChanged { value in
-                        zoom = max(0.1, min(zoom / Float(value), 3.0))
+                        let delta = Float(lastScale / value)  // 🔄 Flip the delta direction
+                        zoom = max(0.1, min(zoom * delta, 3.0))
+                        lastScale = value
                         updateCamera()
                     }
+                    .onEnded { _ in
+                        lastScale = 1.0
+                    }
             )
+
             .onTapGesture {
                 switch nodeName {
                 case "Orange_Book":
