@@ -90,6 +90,10 @@ struct InGameView: View {
                                 nodeName = "Orange_Book"
                             }
                             
+                            if nodeName == "Paper_1" || nodeName == "Paper_2"  {
+                                SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 1.5)
+                            }
+                            
                             print("🎯 Using node: \(nodeName)")
                             
                             let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
@@ -111,11 +115,10 @@ struct InGameView: View {
                                 if gameManager.currentState == .puzzle3_done {
                                     if nodeName == "Clue_color" {
                                         SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 1.5)
-                                    } else {
+                                    } else if nodeName == "UV_Flashlight" {
                                         SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 2.5)
                                     }
                                     inventory.append(nodeName)
-    //                                gameManager.inventory.append(nodeName)
                                     if let scene = scene, // unwrap the optional scene
                                        let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -123,7 +126,17 @@ struct InGameView: View {
                                             }
                                     }
                                     return
-                                }  else  {
+                                }  else if gameManager.currentState == .puzzle4_done  {
+                                    SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 2.5)
+                                    inventory.append(nodeName)
+                                    if let scene = scene, // unwrap the optional scene
+                                       let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                targetNode.isHidden = true
+                                            }
+                                    }
+                                    return
+                                } else {
                                     return
                                 }
                             }
