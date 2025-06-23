@@ -60,7 +60,7 @@ class GameManager: ObservableObject {
             if currentState == .puzzle4_done {
                 foundRiddle()
             }
-
+            
         case "Passcode_Machine":
             if currentState == .puzzle5_done {
                 showingNumberInput = true
@@ -103,8 +103,11 @@ class GameManager: ObservableObject {
         if foundRiddleCount < 3 {
             foundRiddleCount += 1
         }
-        if foundRiddleCount == 3 {
-            advanceTo(.puzzle5_done)
+
+        // Cek hanya jika drawer sudah bisa dibuka (golden key sudah masuk)
+        if foundRiddleCount == 3 && currentState == .puzzle5_done {
+            advanceTo(.gameFinished)
         }
     }
+
 }

@@ -70,13 +70,21 @@ struct InGameView: View {
                         
                         if let targetNode = targetNode {
                             var nodeName = targetNode.name ?? ""
-                            if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
-                                nodeName = "Orange_Book"
-                            }
                             
                             if(nodeName.starts(with: "Numpad_")){
                                 nodeName = "Passcode_Machine"
+                            } else if(nodeName.starts(with: "Codepad_")){
+                                nodeName = "Lock_1"
+                            } else if(nodeName.starts(with: "Key_")){
+                                nodeName = "Lock_2" 
+                            }  else if (nodeName.starts(with: "Num_")){
+                                nodeName = "Passcode_1"
+                            } else if (nodeName == "Drawer"){
+                                nodeName = "Golden_Keyhole"
+                            } else if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
+                                nodeName = "Orange_Book"
                             }
+                            
                             print("🎯 Using node: \(nodeName)")
                             
                             let cabinetNames = ["Cabinet_1", "Cabinet_2", "Cabinet_3"]
@@ -90,7 +98,7 @@ struct InGameView: View {
                                 "Window","Floor", "Tiles", "Table_1", "Table_2", "Small_Table"
                             ]
                             
-                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Drawer") || nodeName.contains("Tube"){
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Tube"){
                                 return
                             }
                             
@@ -169,32 +177,31 @@ struct InGameView: View {
                                 }
                             }
                             
-                            if gameManager.hasInsertedKey {
-                                if cabinetNames.contains(nodeName) {
-                                    if openedCabinets.contains(nodeName) {
-                                        // 🔁 Cabinet is already open — close it
-                                        print("🔁 Closing cabinet \(nodeName)")
-                                        let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
-                                        moveAction.timingMode = .easeInEaseOut
-                                        targetNode.runAction(moveAction)
-                                        SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
-                                        openedCabinets.remove(nodeName)
-                                    } else {
-                                        // 🚪 Cabinet is closed — open it
-                                        print("🚪 Opening cabinet \(nodeName)")
-                                        let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
-                                        moveAction.timingMode = .easeInEaseOut
-                                        targetNode.runAction(moveAction)
-                                        SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
-                                        openedCabinets.insert(nodeName)
+                            if cabinetNames.contains(nodeName) {
+                                if gameManager.currentState != .puzzle5_done && gameManager.currentState != .gameFinished {
+                                        print("🔒 Drawer masih terkunci")
+                                        SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
+                                        return
                                     }
-                                    return
+                                if openedCabinets.contains(nodeName) {
+                                    // 🔁 Cabinet is already open — close it
+                                    print("🔁 Closing cabinet \(nodeName)")
+                                    let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
+                                    moveAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(moveAction)
+                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
+                                    openedCabinets.remove(nodeName)
+                                } else {
+                                    // 🚪 Cabinet is closed — open it
+                                    print("🚪 Opening cabinet \(nodeName)")
+                                    let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
+                                    moveAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(moveAction)
+                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
+                                    openedCabinets.insert(nodeName)
                                 }
                                 return
-                            } else{
-                                return
                             }
-                            
                             gameManager.handleNodeTapped(nodeName)
                             
                             DispatchQueue.main.async {
