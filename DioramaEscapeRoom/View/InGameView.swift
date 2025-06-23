@@ -37,6 +37,9 @@ struct InGameView: View {
     // New state to store the initial horizontal angle when zoomed in
     @State private var initialOrbitalAngleHorizontal: Float = 0.0
     
+    // Game State
+    @StateObject private var gameManager = GameManager()
+    
     // Constants for limiting rotation
     let horizontalRotationLimit: Float = 30.0 * (.pi / 180.0)
     
@@ -92,7 +95,8 @@ struct InGameView: View {
                             }
                             
                             if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
-                                inventory.append(nodeName)
+//                                inventory.append(nodeName)
+                                gameManager.inventory.append(nodeName)
                                 if let scene = scene, // unwrap the optional scene
                                    let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
                                     targetNode.isHidden = true
@@ -117,6 +121,14 @@ struct InGameView: View {
                             }
                             
                             if let locker = lockerNode, let lockerName = locker.name {
+                                
+                                if (lockerName == "Locker_1" && gameManager.currentState != .puzzle1_done) || (lockerName == "Locker_2" && gameManager.currentState != .puzzle1_done) ||
+                                       (lockerName == "Locker_3" && gameManager.currentState != .puzzle3_done) {
+                                        print("🔒 \(lockerName) masih terkunci")
+                                        SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.8)
+                                        return
+                                    }
+                                
                                 let doorName = "Locker_Door_\(lockerName.last!)"
                                 
                                 if let doorNode = locker.childNode(withName: doorName, recursively: true) {
@@ -135,23 +147,25 @@ struct InGameView: View {
                                         SoundPlayer.shared.playSound(named: "locker.mp3", on: targetNode, volume: 0.7)
                                         openedLockers.insert(lockerName)
                                     }
-                                    
-                                    // ✅ Prevent further interaction (e.g., showing FocusObjectView)
                                     return
                                 }
                             }
                             
                             if nodeName == "Door"{
-                                let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
-                                rotateAction.timingMode = .easeInEaseOut
-                                targetNode.runAction(rotateAction)
+                                if gameManager.currentState == .gameFinished {
+                                    let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
+                                    rotateAction.timingMode = .easeInEaseOut
+                                    targetNode.runAction(rotateAction)
+                                    return
+                                }
                                 return
                             }
                             
                             if nodeName.contains("Microscope") {
-                                if inventory.contains(where: { $0.contains("Clue_color") }) {
+                                if gameManager.inventory.contains(where: { $0.contains("Clue_color") }) {
                                     showMicroscope = true
                                     return
+                                    
                                 }
                             }
                             
@@ -175,6 +189,7 @@ struct InGameView: View {
                                 }
                                 return
                             }
+                            gameManager.handleNodeTapped(nodeName)
                             
                             DispatchQueue.main.async {
                                 focusedObject = FocusedObject(name: nodeName)
@@ -246,7 +261,7 @@ struct InGameView: View {
             HStack {
                 Spacer()
                 VStack{
-                    ForEach(inventory, id: \.self) { item in
+                    ForEach(gameManager.inventory, id: \.self) { item in
                         Inventory(level: level.sceneFile, nodeName: item, isFlashlightOn: .constant(false))
                     }
                 }
@@ -286,11 +301,27 @@ struct InGameView: View {
         .navigationBarBackButtonHidden(true)
         .fullScreenCover(item: $focusedObject) { object in
             FocusObjectView(sceneFile: level.sceneFile, nodeName: object.name, inventory: $inventory)
+                .environmentObject(gameManager)
         }
         .fullScreenCover(isPresented: $showMicroscope) {
             MicroscopeView(sceneFile: level.sceneFile, inventory: $inventory)
         }
     }
+    
+    // Locked
+    private func isLocked(_ name: String) -> Bool {
+        switch name {
+        case "Locker_1": return false
+        case "Locker_2": return gameManager.currentState != .puzzle1_done
+        case "Locker_3": return gameManager.currentState != .puzzle3_done
+        case "Cabinet_1": return gameManager.currentState != .puzzle4_done
+        case "Cabinet_2": return gameManager.currentState != .puzzle4_done
+        case "Cabinet_3": return gameManager.currentState != .puzzle4_done
+        case "Door": return gameManager.currentState != .puzzle5_done
+        default: return true
+        }
+    }
+    
     
     private func setupScene() {
         guard scene == nil else { return }
