@@ -6,6 +6,8 @@ struct FocusObjectView: View {
     let nodeName: String
     @Binding var inventory: [String]
     
+    @State private var hasInsertedKey = false
+    
     @Environment(\.dismiss) private var dismiss
 
     @State private var scene = SCNScene()
@@ -171,12 +173,21 @@ struct FocusObjectView: View {
                         }
                     }
                 }
-            } else if nodeName == "Drawer_Lock" || nodeName.contains("Flask") {
+            } else if nodeName == "Golden_Keyhole" || nodeName.contains("Flask") {
                 HStack {
                     Spacer()
                     VStack{
                         ForEach(inventory, id: \.self) { item in
-                            Inventory(level: sceneFile, nodeName: item, isFlashlightOn: $isUVLightOn)
+                            Inventory(
+                                level: sceneFile,
+                                nodeName: item,
+                                isFlashlightOn: $isUVLightOn,
+                                onTapAction: {
+                                    if item == "Golden_Key" && nodeName == "Golden_Keyhole" {
+                                        useGoldenKey()
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -466,8 +477,61 @@ struct FocusObjectView: View {
         
         scene.rootNode.addChildNode(spotlightNode)
     }
+    
+    private func useGoldenKey() {
+        guard nodeName == "Golden_Keyhole", !hasInsertedKey else { return }
+        hasInsertedKey = true
+
+        guard let sourceScene = SCNScene(named: sceneFile),
+              let goldenKey = sourceScene.rootNode.childNode(withName: "Golden_Key", recursively: true),
+              let keyholeNode = scene.rootNode.childNode(withName: "Golden_Keyhole", recursively: true) else {
+            print("❌ Failed to load Golden_Key or Keyhole.")
+            return
+        }
+
+        let clonedKey = goldenKey.clone()
+        clonedKey.name = "InsertedGoldenKey"
+
+        // Center the pivot based on bounding box
+        let (minVec, maxVec) = clonedKey.boundingBox
+        let center = SCNVector3(
+            x: (minVec.x + maxVec.x) / 2,
+            y: (minVec.y + maxVec.y) / 2,
+            z: (minVec.z + maxVec.z) / 2
+        )
+        clonedKey.pivot = SCNMatrix4MakeTranslation(center.x, center.y, center.z)
+
+        // Initial transform
+        clonedKey.scale = SCNVector3(1, 1, 1)
+        clonedKey.eulerAngles = SCNVector3(0, Float.pi, 0)
+
+        // Start position: 5 units in front of keyhole
+        let frontOfKeyholeWorld = keyholeNode.convertPosition(SCNVector3(5, 5, -5), to: nil)
+        let frontOfKeyholeLocal = keyholeNode.convertPosition(frontOfKeyholeWorld, from: nil)
+        clonedKey.position = frontOfKeyholeLocal
+
+        keyholeNode.addChildNode(clonedKey)
+
+        // 🔑 Animate move into keyhole, rotate, then rotate both key & keyhole
+        let move = SCNAction.move(to: SCNVector3Zero, duration: 0.6)
+        let rotate = SCNAction.rotateBy(x: .pi, y: .pi / 2, z: 0, duration: 0.6)
+
+        let finishInsertion = SCNAction.run { _ in
+            let rotate90 = SCNAction.rotateBy(x: 0, y: -CGFloat.pi / 2, z: 0, duration: 0.5)
+            rotate90.timingMode = .easeInEaseOut
+
+            clonedKey.runAction(rotate90)
+            keyholeNode.runAction(rotate90)
+        }
+
+        let sequence = SCNAction.sequence([move, rotate, finishInsertion])
+        sequence.timingMode = .easeInEaseOut
+        clonedKey.runAction(sequence)
+
+        print("🔑 Golden Key inserted and animating.")
+    }
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Flask_1", inventory: .constant(["UV_Flashlight"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
 }
