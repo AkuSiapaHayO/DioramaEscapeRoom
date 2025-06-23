@@ -124,7 +124,7 @@ struct InGameView: View {
                                     inventory.append(nodeName)
                                     if let scene = scene, // unwrap the optional scene
                                        let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                             targetNode.isHidden = true
                                         }
                                     }

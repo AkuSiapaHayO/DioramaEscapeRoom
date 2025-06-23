@@ -593,6 +593,7 @@ struct FocusObjectView: View {
         sequence.timingMode = .easeInEaseOut
         let dismissAction = SCNAction.run { _ in
             print("🎬 Animation finished, dismissing view.")
+            inventory.removeAll { $0 == "Golden_Key" }
             dismiss()
         }
         
