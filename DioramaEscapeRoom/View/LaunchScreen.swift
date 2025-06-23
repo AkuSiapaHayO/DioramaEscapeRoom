@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct LaunchScreen: View {
+    
     var body: some View {
         ZStack {
             GradientBackground()
@@ -19,6 +20,9 @@ struct LaunchScreen: View {
                     .foregroundColor(Color.white)
                     .font(.system(size: 20, weight: .light, design: .default))
             }
+        }
+        .onAppear {
+            BackgroundMusicPlayer.shared.play(filename: "tensemusic")
         }
     }
 }

@@ -68,7 +68,7 @@ struct FocusObjectView: View {
                 }
                 
                 if nodeName == "Passcode_Machine" {
-                    if passcodeInput == "1268"{
+                    if passcodeInput == "2268"{
                         SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode)
                         gameManager.currentState = .gameFinished
                         dismiss()
