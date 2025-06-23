@@ -20,6 +20,8 @@ struct FocusObjectView: View {
     @State private var openedFlasks: Set<String> = []
     @State private var isUVLightOn = false
     
+    @State private var lastDragTranslation = CGSize.zero
+    
     @State private var passcodeInput: String = ""
 
     var body: some View {
@@ -68,11 +70,22 @@ struct FocusObjectView: View {
                 DragGesture()
                     .onChanged { value in
                         guard !["Flask_1", "Flask_2", "Flask_3", "Flask_4"].contains(nodeName) else { return }
-                        rotationY += Float(value.translation.width) * 0.0005
-                        rotationX += Float(value.translation.height) * 0.0005
+
+                        // Delta from last frame
+                        let deltaX = Float(value.translation.width - lastDragTranslation.width)
+                        let deltaY = Float(value.translation.height - lastDragTranslation.height)
+
+                        rotationY += deltaX * 0.01   // Try a slightly larger multiplier for smoother control
+                        rotationX += deltaY * 0.01
+
+                        lastDragTranslation = value.translation
                         updateTransform()
                     }
+                    .onEnded { _ in
+                        lastDragTranslation = .zero
+                    }
             )
+
             .gesture(
                 MagnificationGesture()
                     .onChanged { value in
@@ -136,6 +149,7 @@ struct FocusObjectView: View {
                                 // Centered passcode input text
                                 Text(passcodeInput)
                                     .font(.system(size: 23, weight: .regular))
+                                    .foregroundStyle(.black)
                                 
                                 // Align the delete button to the right
                                 HStack {
@@ -469,5 +483,5 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Flask_1", inventory: .constant(["UV_Flashlight"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_KeyHole", inventory: .constant(["UV_Flashlight"]))
 }

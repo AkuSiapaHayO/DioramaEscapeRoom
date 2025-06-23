@@ -84,7 +84,7 @@ struct InGameView: View {
                             let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001", "Tubes_1"]
                             
                             let untappableObjectNames = [
-                                "Window","Floor", "Tiles", "Table", "Table_2", "Small_Table"
+                                "Window","Floor", "Tiles", "Table_1", "Table_2", "Small_Table"
                             ]
                             
                             if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Drawer") || nodeName.contains("Tube"){
