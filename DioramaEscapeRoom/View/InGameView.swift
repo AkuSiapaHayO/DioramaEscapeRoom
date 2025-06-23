@@ -169,26 +169,32 @@ struct InGameView: View {
                                 }
                             }
                             
-                            if cabinetNames.contains(nodeName) {
-                                if openedCabinets.contains(nodeName) {
-                                    // 🔁 Cabinet is already open — close it
-                                    print("🔁 Closing cabinet \(nodeName)")
-                                    let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
-                                    moveAction.timingMode = .easeInEaseOut
-                                    targetNode.runAction(moveAction)
-                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
-                                    openedCabinets.remove(nodeName)
-                                } else {
-                                    // 🚪 Cabinet is closed — open it
-                                    print("🚪 Opening cabinet \(nodeName)")
-                                    let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
-                                    moveAction.timingMode = .easeInEaseOut
-                                    targetNode.runAction(moveAction)
-                                    SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
-                                    openedCabinets.insert(nodeName)
+                            if gameManager.hasInsertedKey {
+                                if cabinetNames.contains(nodeName) {
+                                    if openedCabinets.contains(nodeName) {
+                                        // 🔁 Cabinet is already open — close it
+                                        print("🔁 Closing cabinet \(nodeName)")
+                                        let moveAction = SCNAction.moveBy(x: 0.0, y: -0.2, z: 0.0, duration: 0.5)
+                                        moveAction.timingMode = .easeInEaseOut
+                                        targetNode.runAction(moveAction)
+                                        SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
+                                        openedCabinets.remove(nodeName)
+                                    } else {
+                                        // 🚪 Cabinet is closed — open it
+                                        print("🚪 Opening cabinet \(nodeName)")
+                                        let moveAction = SCNAction.moveBy(x: 0.0, y: 0.2, z: 0.0, duration: 0.5)
+                                        moveAction.timingMode = .easeInEaseOut
+                                        targetNode.runAction(moveAction)
+                                        SoundPlayer.shared.playSound(named: "cabinet.mp3", on: targetNode, volume: 0.7)
+                                        openedCabinets.insert(nodeName)
+                                    }
+                                    return
                                 }
                                 return
+                            } else{
+                                return
                             }
+                            
                             gameManager.handleNodeTapped(nodeName)
                             
                             DispatchQueue.main.async {
