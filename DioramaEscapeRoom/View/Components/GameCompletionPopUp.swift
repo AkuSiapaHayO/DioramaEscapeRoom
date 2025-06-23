@@ -23,10 +23,10 @@ struct GameCompletionPopUp: View {
                     onBackToMenu()  // 👈 This tells InGameView to dismiss itself
                 }
                 .padding()
-                .background(Color.white)
+                .background(Color.cyan)
                 .foregroundColor(.black)
                 .cornerRadius(12)
-                .fontWeight(.bold)
+                .fontWeight(.regular)
             }
         }
     }

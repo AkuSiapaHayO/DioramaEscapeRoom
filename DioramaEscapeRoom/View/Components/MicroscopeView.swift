@@ -107,7 +107,7 @@ struct MicroscopeView: View {
                     
                     let objectNode = targetNode.clone()
                     objectNode.position = SCNVector3Zero
-                    objectNode.eulerAngles = SCNVector3Zero
+                    objectNode.eulerAngles = SCNVector3(0,0,Float.pi)
                     
                     // Center pivot
                     let (minVec, maxVec) = objectNode.boundingBox
