@@ -554,4 +554,5 @@ struct FocusObjectView: View {
 
 #Preview {
     FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
+        .environmentObject(GameManager())
 }
