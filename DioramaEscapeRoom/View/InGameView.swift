@@ -28,6 +28,9 @@ struct InGameView: View {
     @State private var isZoomedIn: Bool = false
     @State private var isZooming: Bool = false
     
+    @State private var showLockMessage: Bool = false
+    @State private var lockMessageText: String = ""
+    
     // Orbital camera properties
     @State private var orbitalRadius: Float = 3.0
     @State private var orbitalAngleHorizontal: Float = 0.0
@@ -41,7 +44,7 @@ struct InGameView: View {
     @StateObject private var gameManager = GameManager()
     
     @Environment(\.dismiss) private var dismiss  // allow InGameView to pop itself
-
+    
     @State private var doorHasOpened = false
     @State private var showGameCompletedPopup = false
     
@@ -81,7 +84,7 @@ struct InGameView: View {
                             } else if(nodeName.starts(with: "Codepad_")){
                                 nodeName = "Lock_1"
                             } else if(nodeName.starts(with: "Key_")){
-                                nodeName = "Lock_2" 
+                                nodeName = "Lock_2"
                             }  else if (nodeName.starts(with: "Num_")){
                                 nodeName = "Passcode_1"
                             } else if (nodeName == "Drawer"){
@@ -122,8 +125,8 @@ struct InGameView: View {
                                     if let scene = scene, // unwrap the optional scene
                                        let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                                targetNode.isHidden = true
-                                            }
+                                            targetNode.isHidden = true
+                                        }
                                     }
                                     return
                                 }  else if gameManager.currentState == .puzzle4_done  {
@@ -132,8 +135,8 @@ struct InGameView: View {
                                     if let scene = scene, // unwrap the optional scene
                                        let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                                targetNode.isHidden = true
-                                            }
+                                            targetNode.isHidden = true
+                                        }
                                     }
                                     return
                                 } else {
@@ -161,12 +164,22 @@ struct InGameView: View {
                             if let locker = lockerNode, let lockerName = locker.name {
                                 
                                 if (lockerName == "Locker_1" && !gameManager.isPuzzleUnlocked(for: .puzzle1_done)) ||
-                                   (lockerName == "Locker_2" && !gameManager.isPuzzleUnlocked(for: .puzzle3_done)) ||
-                                   (lockerName == "Locker_3" && !gameManager.isPuzzleUnlocked(for: .puzzle4_done)) {
-                                        print("🔒 \(lockerName) masih terkunci")
-                                        SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.8)
-                                        return
+                                    (lockerName == "Locker_2" && !gameManager.isPuzzleUnlocked(for: .puzzle3_done)) ||
+                                    (lockerName == "Locker_3" && !gameManager.isPuzzleUnlocked(for: .puzzle4_done)) {
+                                    print("🔒 \(lockerName) masih terkunci")
+                                    SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.8)
+                                    
+                                    // Trigger Lock Message
+                                    lockMessageText = "\(lockerName.replacingOccurrences(of: "_", with: " ")) is locked"
+                                    showLockMessage = true
+                                    
+                                    // Auto-dismiss after 2 seconds
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                        showLockMessage = false
                                     }
+                                    
+                                    return
+                                }
                                 
                                 let doorName = "Locker_Door_\(lockerName.last!)"
                                 
@@ -198,15 +211,26 @@ struct InGameView: View {
                                     doorHasOpened = true
 
                                     SoundPlayer.shared.playSound(named: "door.mp3", on: targetNode, volume: 0.7)
-                                  
+
                                     // Wait 3 seconds before showing the popup
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                         showGameCompletedPopup = true
                                     }
-                                    
+
+                                    return
+                                } else {
+                                    // 🔒 Door is still locked
+                                    SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
+                                    lockMessageText = "\(nodeName.replacingOccurrences(of: "_", with: " ")) is locked"
+                                    showLockMessage = true
+
+                                    // Auto-dismiss after 2 seconds
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                        showLockMessage = false
+                                    }
+
                                     return
                                 }
-                                return
                             }
                             
                             if nodeName.contains("Microscope") {
@@ -219,10 +243,12 @@ struct InGameView: View {
                             
                             if cabinetNames.contains(nodeName) {
                                 if gameManager.currentState != .puzzle5_done && gameManager.currentState != .gameFinished {
-                                        print("🔒 Drawer masih terkunci")
-                                        SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
-                                        return
-                                    }
+                                    print("🔒 Drawer masih terkunci")
+                                    SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
+                                    lockMessageText = "\(nodeName.replacingOccurrences(of: "_", with: " ")) is locked"
+                                    showLockMessage = true
+                                    return
+                                }
                                 if openedCabinets.contains(nodeName) {
                                     // 🔁 Cabinet is already open — close it
                                     print("🔁 Closing cabinet \(nodeName)")
@@ -264,23 +290,23 @@ struct InGameView: View {
                     .onChanged { value in
                         if isZoomedIn {
                             // Orbital rotation when zoomed in
-//                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.005
-//                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.005
-//                            
-//                            // Apply horizontal rotation and clamp it
-//                            orbitalAngleHorizontal += deltaX
-//                            orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
-//                                                         min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
-//                            
-//                            // Apply vertical rotation and clamp it
-//                            let verticalLimit: Float = .pi // Still 30 degrees for vertical
-//                            orbitalAngleVertical += deltaY
-//                            orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
-//                            
-//                            updateOrbitalCamera()
-//                            
-//                            lastDragTranslationX = value.translation.width
-//                            lastDragTranslationY = value.translation.height
+                            //                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.005
+                            //                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.005
+                            //
+                            //                            // Apply horizontal rotation and clamp it
+                            //                            orbitalAngleHorizontal += deltaX
+                            //                            orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
+                            //                                                         min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
+                            //
+                            //                            // Apply vertical rotation and clamp it
+                            //                            let verticalLimit: Float = .pi // Still 30 degrees for vertical
+                            //                            orbitalAngleVertical += deltaY
+                            //                            orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
+                            //
+                            //                            updateOrbitalCamera()
+                            //
+                            //                            lastDragTranslationX = value.translation.width
+                            //                            lastDragTranslationY = value.translation.height
                             return
                         } else {
                             // Room rotation when zoomed out
@@ -299,17 +325,32 @@ struct InGameView: View {
                         }
                     }
             )
-//            .simultaneousGesture(
-//                isZooming ? nil : MagnificationGesture()
-//                    .onChanged { value in
-//                        guard isZoomedIn else { return }
-//                        let zoomSensitivity: Float = 0.1
-//                        let scaleChange = Float(value - 1.0) * zoomSensitivity
-//                        let newRadius = orbitalRadius * (1.0 - scaleChange)
-//                        orbitalRadius = max(1.0, min(5.0, newRadius))
-//                        updateOrbitalCamera()
-//                    }
-//            )
+            //            .simultaneousGesture(
+            //                isZooming ? nil : MagnificationGesture()
+            //                    .onChanged { value in
+            //                        guard isZoomedIn else { return }
+            //                        let zoomSensitivity: Float = 0.1
+            //                        let scaleChange = Float(value - 1.0) * zoomSensitivity
+            //                        let newRadius = orbitalRadius * (1.0 - scaleChange)
+            //                        orbitalRadius = max(1.0, min(5.0, newRadius))
+            //                        updateOrbitalCamera()
+            //                    }
+            //            )
+            if showLockMessage {
+                VStack{
+                    Text(lockMessageText)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.2))
+                        .cornerRadius(10)
+                        .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.3), value: showLockMessage)
+                    Spacer()
+                }
+                .padding(24)
+            }
             
             HStack {
                 Spacer()
