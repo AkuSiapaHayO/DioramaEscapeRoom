@@ -323,6 +323,14 @@ struct FocusObjectView: View {
         //        objectNode.name = "FocusObject"
         objectNode.position = SCNVector3Zero
         
+        objectNode.enumerateChildNodes { child, _ in
+            if let targetMaterial = child.geometry?.materials.first(where: { $0.name == "Paper_w_Writing" }) {
+                let newImage = UIImage(named: "clue_book")
+                targetMaterial.diffuse.contents = newImage
+                print("✅ Changed material in \(child.name ?? "Unnamed Node")")
+            }
+        }
+        
         if rotation1.contains(nodeName) {
             objectNode.eulerAngles = SCNVector3Zero
         } else if rotation2.contains(nodeName) {
