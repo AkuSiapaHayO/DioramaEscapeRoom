@@ -22,6 +22,7 @@ struct FocusObjectView: View {
     @State private var hasBookOpened = false
     @State private var openedFlasks: Set<String> = []
     @State private var isUVLightOn = false
+    @State private var isTurningKey = false
     
     @State private var passcodeInput: String = ""
   
@@ -47,7 +48,8 @@ struct FocusObjectView: View {
                 
                 print("🖱️ Tapped node: \(tappedName)")
                 
-                if tappedName.starts(with: "Numpad_") || tappedName.starts(with: "Key_") {
+                if tappedName.starts(with: "Numpad_") ||
+                    tappedName.starts(with: "Key_") || tappedName.starts(with: "Codepad_") || tappedName.starts(with: "Num_"){
                     if let digit = tappedName.components(separatedBy: "_").last {
                         passcodeInput.append(digit)
                         print("🔢 Passcode so far: \(passcodeInput)")
@@ -85,7 +87,12 @@ struct FocusObjectView: View {
                     }
                 }
                 
-                
+                if nodeName == "Passcode_1" {
+                    if passcodeInput == "357759"{
+                        gameManager.currentState = .puzzle4_done
+                        dismiss()
+                    }
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: isUVLightOn) { _ in
@@ -516,7 +523,8 @@ struct FocusObjectView: View {
     
     private func useGoldenKey() {
         guard nodeName == "Golden_Keyhole", !hasInsertedKey else { return }
-        hasInsertedKey = true
+        gameManager.hasInsertedKey = true
+        gameManager.advanceTo(.puzzle5_done)
         
         guard let sourceScene = SCNScene(named: sceneFile),
               let goldenKey = sourceScene.rootNode.childNode(withName: "Golden_Key", recursively: true),
@@ -562,13 +570,19 @@ struct FocusObjectView: View {
         
         let sequence = SCNAction.sequence([move, rotate, finishInsertion])
         sequence.timingMode = .easeInEaseOut
-        clonedKey.runAction(sequence)
-        
-        print("🔑 Golden Key inserted and animating.")
+        let dismissAction = SCNAction.run { _ in
+            print("🎬 Animation finished, dismissing view.")
+            dismiss()
+        }
+
+        let fullSequence = SCNAction.sequence([move, rotate, finishInsertion, dismissAction])
+        fullSequence.timingMode = .easeInEaseOut
+        clonedKey.runAction(fullSequence)
+
     }
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Passcode_Machine", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
         .environmentObject(GameManager())
 }
