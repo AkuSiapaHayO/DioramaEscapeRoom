@@ -70,6 +70,22 @@ struct FocusObjectView: View {
                         dismiss()
                     }
                 }
+                
+                if nodeName == "Lock_2" {
+                    if passcodeInput == "2586"{
+                        gameManager.currentState = .puzzle3_done
+                        dismiss()
+                    }
+                }
+                
+                if nodeName == "Lock_1" {
+                    if passcodeInput == "CoFFe"{
+                        gameManager.currentState = .puzzle1_done
+                        dismiss()
+                    }
+                }
+                
+                
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: isUVLightOn) { _ in
@@ -197,7 +213,7 @@ struct FocusObjectView: View {
                 HStack {
                     Spacer()
                     VStack{
-                        ForEach(gameManager.inventory, id: \.self) { item in
+                        ForEach(inventory, id: \.self) { item in
                             Inventory(
                                 level: sceneFile,
                                 nodeName: item,

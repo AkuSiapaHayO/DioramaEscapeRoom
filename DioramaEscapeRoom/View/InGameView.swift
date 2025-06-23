@@ -95,8 +95,8 @@ struct InGameView: View {
                             }
                             
                             if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
-//                                inventory.append(nodeName)
-                                gameManager.inventory.append(nodeName)
+                                inventory.append(nodeName)
+//                                gameManager.inventory.append(nodeName)
                                 if let scene = scene, // unwrap the optional scene
                                    let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
                                     targetNode.isHidden = true
@@ -122,8 +122,8 @@ struct InGameView: View {
                             
                             if let locker = lockerNode, let lockerName = locker.name {
                                 
-                                if (lockerName == "Locker_1" && gameManager.currentState != .puzzle1_done) || (lockerName == "Locker_2" && gameManager.currentState != .puzzle1_done) ||
-                                       (lockerName == "Locker_3" && gameManager.currentState != .puzzle3_done) {
+                                if (lockerName == "Locker_1" && gameManager.currentState != .puzzle1_done) || (lockerName == "Locker_2" && gameManager.currentState != .puzzle3_done) ||
+                                       (lockerName == "Locker_3" && gameManager.currentState != .puzzle4_done) {
                                         print("🔒 \(lockerName) masih terkunci")
                                         SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.8)
                                         return
@@ -162,7 +162,7 @@ struct InGameView: View {
                             }
                             
                             if nodeName.contains("Microscope") {
-                                if gameManager.inventory.contains(where: { $0.contains("Clue_color") }) {
+                                if inventory.contains(where: { $0.contains("Clue_color") }) {
                                     showMicroscope = true
                                     return
                                     
@@ -261,7 +261,7 @@ struct InGameView: View {
             HStack {
                 Spacer()
                 VStack{
-                    ForEach(gameManager.inventory, id: \.self) { item in
+                    ForEach(inventory, id: \.self) { item in
                         Inventory(level: level.sceneFile, nodeName: item, isFlashlightOn: .constant(false))
                     }
                 }

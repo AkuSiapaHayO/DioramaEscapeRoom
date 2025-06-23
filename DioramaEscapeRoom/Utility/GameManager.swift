@@ -79,7 +79,7 @@ class GameManager: ObservableObject {
                 advanceTo(.puzzle1_done)
             }
         case .locker2:
-            if number == "2506" && currentState == .puzzle1_done {
+            if number == "2586" && currentState == .puzzle1_done {
                 inventory.append("UV_Flashlight")
                 inventory.append("Clue_color")
                 advanceTo(.puzzle3_done)

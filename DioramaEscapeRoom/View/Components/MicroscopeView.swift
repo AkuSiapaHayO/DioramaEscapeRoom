@@ -16,7 +16,7 @@ struct MicroscopeView: View {
     @AppStorage("microscopeEffectStrength") private var effectStrength: Double = 0.8
     
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var gameManager: GameManager
+//    @EnvironmentObject var gameManager: GameManager
     
     var body: some View {
         var blurRadius: Double {
@@ -156,7 +156,7 @@ struct MicroscopeView: View {
             HStack {
                 Spacer()
                 VStack{
-                    ForEach(gameManager.inventory, id: \.self) { item in
+                    ForEach(inventory, id: \.self) { item in
                         Inventory(level: sceneFile, nodeName: item, isFlashlightOn: .constant(false))
                     }
                 }
@@ -166,7 +166,7 @@ struct MicroscopeView: View {
     }
 }
 
+
 #Preview {
     MicroscopeView(sceneFile: "Science Lab Updated.scn", inventory: .constant(["UV_Flashlight", "Clue_color"]))
-        .environmentObject(GameManager())
 }
