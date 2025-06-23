@@ -85,7 +85,12 @@ struct FocusObjectView: View {
                     }
                 }
                 
-                
+                if nodeName == "Passcode_1" {
+                    if passcodeInput == "357759"{
+                        gameManager.currentState = .puzzle4_done
+                        dismiss()
+                    }
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: isUVLightOn) { _ in
@@ -516,7 +521,7 @@ struct FocusObjectView: View {
     
     private func useGoldenKey() {
         guard nodeName == "Golden_Keyhole", !hasInsertedKey else { return }
-        hasInsertedKey = true
+        gameManager.hasInsertedKey = true
         
         guard let sourceScene = SCNScene(named: sceneFile),
               let goldenKey = sourceScene.rootNode.childNode(withName: "Golden_Key", recursively: true),

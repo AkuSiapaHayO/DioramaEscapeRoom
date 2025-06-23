@@ -29,6 +29,7 @@ class GameManager: ObservableObject {
     @Published var showingNumberInput: Bool = false
     @Published var inputTarget: InputTarget? = nil
     @Published var foundRiddleCount: Int = 0
+    @Published var hasInsertedKey: Bool = false
 
     func advanceTo(_ newState: GameProgressState) {
         print("\u{1F501} State berubah ke: \(newState)")
