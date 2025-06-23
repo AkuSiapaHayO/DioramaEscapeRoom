@@ -103,19 +103,31 @@ struct InGameView: View {
                             }
                             
                             if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
-                                inventory.append(nodeName)
-//                                gameManager.inventory.append(nodeName)
-                                if let scene = scene, // unwrap the optional scene
-                                   let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
-                                    targetNode.isHidden = true
+                                if gameManager.currentState == .puzzle3_done {
+                                    if nodeName == "Clue_color" {
+                                        SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 1.5)
+                                    } else {
+                                        SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 2.5)
+                                    }
+                                    inventory.append(nodeName)
+    //                                gameManager.inventory.append(nodeName)
+                                    if let scene = scene, // unwrap the optional scene
+                                       let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                targetNode.isHidden = true
+                                            }
+                                    }
+                                    return
+                                }  else  {
+                                    return
                                 }
-                                return
                             }
                             
                             if RotatingObjectNames.contains(nodeName) {
                                 let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
                                 rotateAction.timingMode = .easeInEaseOut
                                 targetNode.runAction(rotateAction)
+                                SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 2.5)
                                 return
                             }
                             
@@ -164,6 +176,7 @@ struct InGameView: View {
                                     let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
                                     rotateAction.timingMode = .easeInEaseOut
                                     targetNode.runAction(rotateAction)
+                                    SoundPlayer.shared.playSound(named: "door.mp3", on: targetNode, volume: 0.7)
                                     return
                                 }
                                 return
@@ -171,9 +184,9 @@ struct InGameView: View {
                             
                             if nodeName.contains("Microscope") {
                                 if inventory.contains(where: { $0.contains("Clue_color") }) {
+                                    SoundPlayer.shared.playSound(named: "whoosh.mp3", on: targetNode, volume: 0.7)
                                     showMicroscope = true
                                     return
-                                    
                                 }
                             }
                             

@@ -69,6 +69,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Passcode_Machine" {
                     if passcodeInput == "1268"{
+                        SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode)
                         gameManager.currentState = .gameFinished
                         dismiss()
                     }
@@ -76,6 +77,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Lock_2" {
                     if passcodeInput == "2586"{
+                        SoundPlayer.shared.playSound(named: "correct2.mp3", on: scene.rootNode)
                         gameManager.currentState = .puzzle3_done
                         dismiss()
                     }
@@ -83,6 +85,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Lock_1" {
                     if passcodeInput == "CoFFe"{
+                        SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode)
                         gameManager.currentState = .puzzle1_done
                         dismiss()
                     }
@@ -90,6 +93,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Passcode_1" {
                     if passcodeInput == "357759"{
+                        SoundPlayer.shared.playSound(named: "correct2.mp3", on: scene.rootNode)
                         gameManager.currentState = .puzzle4_done
                         dismiss()
                     }
@@ -534,6 +538,8 @@ struct FocusObjectView: View {
         spotlightNode.look(at: SCNVector3Zero)
         
         scene.rootNode.addChildNode(spotlightNode)
+        
+        SoundPlayer.shared.playSound(named: "flashlight.mp3", on: spotlightNode, volume: 0.7)
     }
     
     private func useGoldenKey() {
@@ -589,15 +595,16 @@ struct FocusObjectView: View {
             print("🎬 Animation finished, dismissing view.")
             dismiss()
         }
+        
+        SoundPlayer.shared.playSound(named: "keylock.mp3", on: keyholeNode, volume: 0.7)
 
         let fullSequence = SCNAction.sequence([move, rotate, finishInsertion, dismissAction])
         fullSequence.timingMode = .easeInEaseOut
         clonedKey.runAction(fullSequence)
-
     }
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Passcode_Machine", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
         .environmentObject(GameManager())
 }
