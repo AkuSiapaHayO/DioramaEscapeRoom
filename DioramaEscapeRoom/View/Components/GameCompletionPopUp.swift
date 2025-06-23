@@ -1,44 +1,35 @@
-//
-//  GameCompletionPopUp.swift
-//  DioramaEscapeRoom
-//
-//  Created by Louis Mario Wijaya on 23/06/25.
-//
-
 import SwiftUI
 
 struct GameCompletionPopUp: View {
-    @Environment(\.dismiss) private var dismiss
-    
+    let onBackToMenu: () -> Void
+
     var body: some View {
         ZStack {
-            Color.white
-                .opacity(0.75)
-                .ignoresSafeArea()
-            
-            VStack {
+            LinearGradient(
+                gradient: Gradient(colors: [Color(hex: "00D4DF"), Color(hex: "044948")]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .opacity(0.75)
+            .ignoresSafeArea()
+
+            VStack(spacing: 24) {
                 Text("Level Completed!")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
-                
-                Button(action: {
-                    dismiss()
-                }) {
-                    Text("Back to Main Menu")
-                        .fontWeight(.bold)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.cyan)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                    .foregroundColor(.white)
+
+                Button("Back to Main Menu") {
+                    onBackToMenu()  // 👈 This tells InGameView to dismiss itself
                 }
+                .padding()
+                .background(Color.white)
+                .foregroundColor(.black)
+                .cornerRadius(12)
+                .fontWeight(.bold)
             }
         }
-        .ignoresSafeArea(.all)
     }
 }
 
-#Preview {
-    GameCompletionPopUp()
-}
+

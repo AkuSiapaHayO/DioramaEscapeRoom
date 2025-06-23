@@ -40,6 +40,11 @@ struct InGameView: View {
     // Game State
     @StateObject private var gameManager = GameManager()
     
+    @Environment(\.dismiss) private var dismiss  // allow InGameView to pop itself
+
+    @State private var doorHasOpened = false
+    @State private var showGameCompletedPopup = false
+    
     // Constants for limiting rotation
     let horizontalRotationLimit: Float = 30.0 * (.pi / 180.0)
     
@@ -171,12 +176,20 @@ struct InGameView: View {
                                 }
                             }
                             
-                            if nodeName == "Door"{
-                                if gameManager.currentState == .gameFinished {
+                            if nodeName == "Door" {
+                                if gameManager.currentState == .gameFinished && !doorHasOpened {
                                     let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 4, duration: 0.5)
                                     rotateAction.timingMode = .easeInEaseOut
                                     targetNode.runAction(rotateAction)
+                                    doorHasOpened = true
+
                                     SoundPlayer.shared.playSound(named: "door.mp3", on: targetNode, volume: 0.7)
+                                  
+                                    // Wait 3 seconds before showing the popup
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                        showGameCompletedPopup = true
+                                    }
+                                    
                                     return
                                 }
                                 return
@@ -332,6 +345,14 @@ struct InGameView: View {
         .fullScreenCover(isPresented: $showMicroscope) {
             MicroscopeView(sceneFile: level.sceneFile, inventory: $inventory)
         }
+        .fullScreenCover(isPresented: $showGameCompletedPopup) {
+            GameCompletionPopUp(onBackToMenu: exitToMainMenu)
+        }
+    }
+    
+    func exitToMainMenu() {
+        BackgroundMusicPlayer.shared.stop()
+        dismiss()  // 👈 This will actually pop InGameView
     }
     
     // Locked
