@@ -196,23 +196,24 @@ struct InGameView: View {
                     .onChanged { value in
                         if isZoomedIn {
                             // Orbital rotation when zoomed in
-                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.005
-                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.005
-                            
-                            // Apply horizontal rotation and clamp it
-                            orbitalAngleHorizontal += deltaX
-                            orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
-                                                         min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
-                            
-                            // Apply vertical rotation and clamp it
-                            let verticalLimit: Float = .pi // Still 30 degrees for vertical
-                            orbitalAngleVertical += deltaY
-                            orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
-                            
-                            updateOrbitalCamera()
-                            
-                            lastDragTranslationX = value.translation.width
-                            lastDragTranslationY = value.translation.height
+//                            let deltaX = Float(value.translation.width - lastDragTranslationX) * 0.005
+//                            let deltaY = Float(value.translation.height - lastDragTranslationY) * 0.005
+//                            
+//                            // Apply horizontal rotation and clamp it
+//                            orbitalAngleHorizontal += deltaX
+//                            orbitalAngleHorizontal = max(initialOrbitalAngleHorizontal - horizontalRotationLimit,
+//                                                         min(initialOrbitalAngleHorizontal + horizontalRotationLimit, orbitalAngleHorizontal))
+//                            
+//                            // Apply vertical rotation and clamp it
+//                            let verticalLimit: Float = .pi // Still 30 degrees for vertical
+//                            orbitalAngleVertical += deltaY
+//                            orbitalAngleVertical = max(-verticalLimit, min(verticalLimit, orbitalAngleVertical))
+//                            
+//                            updateOrbitalCamera()
+//                            
+//                            lastDragTranslationX = value.translation.width
+//                            lastDragTranslationY = value.translation.height
+                            return
                         } else {
                             // Room rotation when zoomed out
                             let delta = Float(value.translation.width - lastDragTranslationX) * 0.005
@@ -230,17 +231,17 @@ struct InGameView: View {
                         }
                     }
             )
-            .simultaneousGesture(
-                isZooming ? nil : MagnificationGesture()
-                    .onChanged { value in
-                        guard isZoomedIn else { return }
-                        let zoomSensitivity: Float = 0.1
-                        let scaleChange = Float(value - 1.0) * zoomSensitivity
-                        let newRadius = orbitalRadius * (1.0 - scaleChange)
-                        orbitalRadius = max(1.0, min(5.0, newRadius))
-                        updateOrbitalCamera()
-                    }
-            )
+//            .simultaneousGesture(
+//                isZooming ? nil : MagnificationGesture()
+//                    .onChanged { value in
+//                        guard isZoomedIn else { return }
+//                        let zoomSensitivity: Float = 0.1
+//                        let scaleChange = Float(value - 1.0) * zoomSensitivity
+//                        let newRadius = orbitalRadius * (1.0 - scaleChange)
+//                        orbitalRadius = max(1.0, min(5.0, newRadius))
+//                        updateOrbitalCamera()
+//                    }
+//            )
             
             HStack {
                 Spacer()

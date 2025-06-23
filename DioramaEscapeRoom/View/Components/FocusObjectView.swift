@@ -6,6 +6,8 @@ struct FocusObjectView: View {
     let nodeName: String
     @Binding var inventory: [String]
     
+    @State private var hasInsertedKey = false
+    
     @Environment(\.dismiss) private var dismiss
 
     @State private var scene = SCNScene()
@@ -171,12 +173,21 @@ struct FocusObjectView: View {
                         }
                     }
                 }
-            } else if nodeName == "Drawer_Lock" || nodeName.contains("Flask") {
+            } else if nodeName == "Golden_Keyhole" || nodeName.contains("Flask") {
                 HStack {
                     Spacer()
                     VStack{
                         ForEach(inventory, id: \.self) { item in
-                            Inventory(level: sceneFile, nodeName: item, isFlashlightOn: .constant(false))
+                            Inventory(
+                                level: sceneFile,
+                                nodeName: item,
+                                isFlashlightOn: $isUVLightOn,
+                                onTapAction: {
+                                    if item == "Golden_Key" && nodeName == "Golden_Keyhole" {
+                                        useGoldenKey()
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -210,7 +221,6 @@ struct FocusObjectView: View {
             "Willas___Hayya",
             "Paper_2",
             "Paper_1",
-            "Photo_4",
             "Window",
         ]
         let rotation2: Set<String> = [
@@ -246,7 +256,7 @@ struct FocusObjectView: View {
             "Flask_2",
             "Flask_3",
             "Flask_4",
-            "Passcode_1"
+            "Passcode_1",
         ]
         
         let rotation7: Set<String> = [
@@ -255,7 +265,11 @@ struct FocusObjectView: View {
         ]
         
         let rotation8: Set<String> = [
-            "Riddle_1"
+            "Riddle_1",
+        ]
+        
+        let rotation9: Set<String> = [
+            "Photo_4",
         ]
         
         scene = SCNScene()
@@ -278,14 +292,23 @@ struct FocusObjectView: View {
         } else if rotation6.contains(nodeName) {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: .pi, z: .pi)
         } else if rotation7.contains(nodeName) {
-            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: .pi)
+            objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         } else if rotation8.contains(nodeName) {
-            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: -.pi/2)
-        } else {
+            objectNode.eulerAngles = SCNVector3(x: -.pi/2, y: 4.6, z: 0)
+        } else if rotation9.contains(nodeName) {
+            objectNode.eulerAngles = SCNVector3(x: 0, y: 0, z: .pi/2)
+       } else {
             objectNode.eulerAngles = SCNVector3(x: .pi/2, y: 0, z: .pi)
         }
         
         objectNode.scale = SCNVector3(x: 1, y: 1, z: 1)
+        
+        objectNode.enumerateChildNodes { child, _ in
+            if let name = child.name, name.starts(with: "Hint_") {
+                child.isHidden = true
+                print("🙈 Recursively hiding \(name) on setup")
+            }
+        }
 
         // Calculate bounding box and pivot
         let (minBox, maxBox) = objectNode.boundingBox
@@ -333,8 +356,6 @@ struct FocusObjectView: View {
         rotationY = objectNode.eulerAngles.y
         rotationZ = objectNode.eulerAngles.z
     }
-    
-
 
     private func updateTransform() {
         objectNode.eulerAngles = SCNVector3(rotationX, rotationY, rotationZ)
@@ -418,7 +439,7 @@ struct FocusObjectView: View {
         case "Orange_Book":
             return hasBookOpened ? "Tap to fold" : "Tap to unfold"
         case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
-            return openedFlasks.contains(nodeName) ? "Tap to close" : "Tap to rotate flask"
+            return openedFlasks.contains(nodeName) ? "Tap to rotate back" : "Tap to rotate flask"
         case "Microscope_1", "Microscope_2", "Microscope_3":
             return "Find a blank paper to view in the microscope"
         default:
@@ -429,7 +450,14 @@ struct FocusObjectView: View {
     private func updateFlashlight() {
         // Remove any existing spotlight
         scene.rootNode.childNodes.filter { $0.name == "UVSpotlight" }.forEach { $0.removeFromParentNode() }
-
+        
+        objectNode.enumerateChildNodes { child, _ in
+            if let name = child.name, name.starts(with: "Hint_") {
+                child.isHidden = !isUVLightOn
+                print("🙈 Showing \(name)")
+            }
+        }
+        
         guard isUVLightOn else { return }
 
         let spotlightNode = SCNNode()
@@ -449,8 +477,61 @@ struct FocusObjectView: View {
         
         scene.rootNode.addChildNode(spotlightNode)
     }
+    
+    private func useGoldenKey() {
+        guard nodeName == "Golden_Keyhole", !hasInsertedKey else { return }
+        hasInsertedKey = true
+
+        guard let sourceScene = SCNScene(named: sceneFile),
+              let goldenKey = sourceScene.rootNode.childNode(withName: "Golden_Key", recursively: true),
+              let keyholeNode = scene.rootNode.childNode(withName: "Golden_Keyhole", recursively: true) else {
+            print("❌ Failed to load Golden_Key or Keyhole.")
+            return
+        }
+
+        let clonedKey = goldenKey.clone()
+        clonedKey.name = "InsertedGoldenKey"
+
+        // Center the pivot based on bounding box
+        let (minVec, maxVec) = clonedKey.boundingBox
+        let center = SCNVector3(
+            x: (minVec.x + maxVec.x) / 2,
+            y: (minVec.y + maxVec.y) / 2,
+            z: (minVec.z + maxVec.z) / 2
+        )
+        clonedKey.pivot = SCNMatrix4MakeTranslation(center.x, center.y, center.z)
+
+        // Initial transform
+        clonedKey.scale = SCNVector3(1, 1, 1)
+        clonedKey.eulerAngles = SCNVector3(0, Float.pi, 0)
+
+        // Start position: 5 units in front of keyhole
+        let frontOfKeyholeWorld = keyholeNode.convertPosition(SCNVector3(5, 5, -5), to: nil)
+        let frontOfKeyholeLocal = keyholeNode.convertPosition(frontOfKeyholeWorld, from: nil)
+        clonedKey.position = frontOfKeyholeLocal
+
+        keyholeNode.addChildNode(clonedKey)
+
+        // 🔑 Animate move into keyhole, rotate, then rotate both key & keyhole
+        let move = SCNAction.move(to: SCNVector3Zero, duration: 0.6)
+        let rotate = SCNAction.rotateBy(x: .pi, y: .pi / 2, z: 0, duration: 0.6)
+
+        let finishInsertion = SCNAction.run { _ in
+            let rotate90 = SCNAction.rotateBy(x: 0, y: -CGFloat.pi / 2, z: 0, duration: 0.5)
+            rotate90.timingMode = .easeInEaseOut
+
+            clonedKey.runAction(rotate90)
+            keyholeNode.runAction(rotate90)
+        }
+
+        let sequence = SCNAction.sequence([move, rotate, finishInsertion])
+        sequence.timingMode = .easeInEaseOut
+        clonedKey.runAction(sequence)
+
+        print("🔑 Golden Key inserted and animating.")
+    }
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Microscope_1", inventory: .constant(["UV_Flashlight"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
 }
