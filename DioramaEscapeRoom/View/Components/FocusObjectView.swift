@@ -24,7 +24,8 @@ struct FocusObjectView: View {
     @State private var isUVLightOn = false
     
     @State private var passcodeInput: String = ""
-    
+  
+    @EnvironmentObject var gameManager: GameManager
     var body: some View {
         ZStack {
             Color.black
@@ -60,6 +61,13 @@ struct FocusObjectView: View {
                         toggleFlask(flaskName: nodeName)
                     default:
                         break
+                    }
+                }
+                
+                if nodeName == "Passcode_Machine" {
+                    if passcodeInput == "1268"{
+                        gameManager.currentState = .gameFinished
+                        dismiss()
                     }
                 }
             }
@@ -189,7 +197,7 @@ struct FocusObjectView: View {
                 HStack {
                     Spacer()
                     VStack{
-                        ForEach(inventory, id: \.self) { item in
+                        ForEach(gameManager.inventory, id: \.self) { item in
                             Inventory(
                                 level: sceneFile,
                                 nodeName: item,
