@@ -33,6 +33,10 @@ struct InGameView: View {
     @State private var showLockMessage: Bool = false
     @State private var lockMessageText: String = ""
     
+    @State private var showUnlockMessage: Bool = false
+    @State private var unlockMessageText: String = ""
+
+    
     // Orbital camera properties
     @State private var orbitalRadius: Float = 3.0
     @State private var orbitalAngleHorizontal: Float = 0.0
@@ -358,7 +362,26 @@ struct InGameView: View {
                     Spacer()
                 }
                 .padding(24)
+                
             }
+            
+            if showUnlockMessage {
+                VStack{
+                    Text(unlockMessageText)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.3))
+                        .cornerRadius(10)
+                        .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.3), value: showUnlockMessage)
+                    Spacer()
+                }
+                .padding(24)
+                
+            }
+            
             
             HStack {
                 Spacer()
@@ -405,6 +428,31 @@ struct InGameView: View {
             setupScene()
             BackgroundMusicPlayer.shared.stop()
             BackgroundMusicPlayer.shared.play(filename: "mystery")
+        }
+        .onChange(of: gameManager.currentState) { newState in
+            var message: String? = nil
+
+            switch newState {
+            case .puzzle1_done:
+                message = "Locker 1 is unlocked"
+            case .puzzle3_done:
+                message = "Locker 2 is unlocked"
+            case .puzzle4_done:
+                message = "Locker 3 is unlocked"
+            case .puzzle5_done:
+                message = "Cabinet is unlocked"
+            default:
+                break
+            }
+
+            if let unlockMessage = message {
+                unlockMessageText = unlockMessage
+                showUnlockMessage = true
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    showUnlockMessage = false
+                }
+            }
         }
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
