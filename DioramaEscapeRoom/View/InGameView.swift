@@ -390,6 +390,12 @@ struct InGameView: View {
             }
             
             VStack {
+                HStack(spacing: 16) {
+                    HintButtonComponent(currentState: gameManager.currentState)
+                }
+            }
+            
+            VStack {
                 HStack {
                     ExitButtonComponent()
                 }
