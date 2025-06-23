@@ -54,6 +54,7 @@ struct FocusObjectView: View {
                     if let digit = tappedName.components(separatedBy: "_").last {
                         passcodeInput.append(digit)
                         print("🔢 Passcode so far: \(passcodeInput)")
+                        SoundPlayer.shared.playSound(named: "tap.mp3", on: target, volume: 0.4)
                     }
                 } else {
                     // fallback behavior like opening book/flask
@@ -448,6 +449,7 @@ struct FocusObjectView: View {
                 leftHalf.runAction(closeLeft)
                 rightHalf.runAction(closeRight)
                 
+                SoundPlayer.shared.playSound(named: "openbook.mp3", on: objectNode, volume: 3.0)
                 print("📕 Orange_Book closed")
             } else {
                 // 📖 OPEN book
@@ -459,6 +461,7 @@ struct FocusObjectView: View {
                 leftHalf.runAction(openLeft)
                 rightHalf.runAction(openRight)
                 
+                SoundPlayer.shared.playSound(named: "openbook.mp3", on: objectNode, volume: 3.0)
                 print("📖 Orange_Book opened")
             }
             hasBookOpened.toggle()
@@ -606,6 +609,6 @@ struct FocusObjectView: View {
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Lock_2", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
         .environmentObject(GameManager())
 }
