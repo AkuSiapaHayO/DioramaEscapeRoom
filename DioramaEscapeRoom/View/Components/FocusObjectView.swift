@@ -69,7 +69,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Passcode_Machine" {
                     if passcodeInput == "2268"{
-                        SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode)
+                        SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode, volume: 2.0)
                         gameManager.currentState = .gameFinished
                         dismiss()
                     }
@@ -77,7 +77,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Lock_2" {
                     if passcodeInput == "2586"{
-                        SoundPlayer.shared.playSound(named: "correct2.mp3", on: scene.rootNode)
+                        SoundPlayer.shared.playSound(named: "correct2.mp3", on: scene.rootNode, volume: 2.0)
                         gameManager.currentState = .puzzle3_done
                         dismiss()
                     }
@@ -85,7 +85,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Lock_1" {
                     if passcodeInput == "CoFFe"{
-                        SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode)
+                        SoundPlayer.shared.playSound(named: "correct.mp3", on: scene.rootNode, volume: 2.0)
                         gameManager.currentState = .puzzle1_done
                         dismiss()
                     }
@@ -93,7 +93,7 @@ struct FocusObjectView: View {
                 
                 if nodeName == "Passcode_1" {
                     if passcodeInput == "357759"{
-                        SoundPlayer.shared.playSound(named: "correct2.mp3", on: scene.rootNode)
+                        SoundPlayer.shared.playSound(named: "correct2.mp3", on: scene.rootNode, volume: 2.0)
                         gameManager.currentState = .puzzle4_done
                         dismiss()
                     }
