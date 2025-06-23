@@ -348,7 +348,7 @@ struct InGameView: View {
         }
         .onAppear {
             setupScene()
-            BackgroundMusicPlayer.shared.play(filename: "tensemusic")
+            BackgroundMusicPlayer.shared.play(filename: "mystery")
         }
         .ignoresSafeArea(.all)
         .navigationBarBackButtonHidden(true)
