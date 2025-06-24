@@ -26,6 +26,9 @@ struct GameCompletionPopUp: View {
                 }
             }
         }
+        .onAppear {
+            SoundPlayer.shared.playSoundUI(named: "finish.mp3", volume: 1.0)
+        }
     }
 }
 

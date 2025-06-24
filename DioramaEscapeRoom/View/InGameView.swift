@@ -123,12 +123,15 @@ struct InGameView: View {
                             if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
                                 if gameManager.currentState == .puzzle3_done {
                                     if nodeName == "Clue_color" {
-                                        SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 4.0)
+                                        SoundPlayer.shared.playSoundUI(named: "paper.mp3", volume: 3.0 )
                                         hasGottenClueColor = true
                                     } else if nodeName == "UV_Flashlight" {
-                                        SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 3.0)
+                                        SoundPlayer.shared.playSoundUI(named: "paper.mp3", volume: 3.0 )
                                     }
-                                    inventory.append(nodeName)
+                                    if !inventory.contains(nodeName) {
+                                        inventory.append(nodeName)
+                                    }
+                                    
                                     if let scene = scene, // unwrap the optional scene
                                        let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -137,11 +140,13 @@ struct InGameView: View {
                                     }
                                     return
                                 }  else if gameManager.currentState == .puzzle4_done  {
-                                    SoundPlayer.shared.playSound(named: "rotatemove.mp3", on: targetNode, volume: 2.5)
-                                    inventory.append(nodeName)
+                                    SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 2.5)
+                                    if !inventory.contains(nodeName) {
+                                        inventory.append(nodeName)
+                                    }
                                     if let scene = scene, // unwrap the optional scene
                                        let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                             targetNode.isHidden = true
                                         }
                                     }
@@ -391,7 +396,7 @@ struct InGameView: View {
                     }
                 }
             }
-            .padding(24)
+            .padding(.trailing, 72)
             
             if isZoomedIn {
                 VStack {
@@ -441,6 +446,8 @@ struct InGameView: View {
                 message = "Locker 3 is unlocked"
             case .puzzle5_done:
                 message = "Cabinet is unlocked"
+            case .gameFinished:
+                message = "Door is unlocked"
             default:
                 break
             }
@@ -449,7 +456,7 @@ struct InGameView: View {
                 unlockMessageText = unlockMessage
                 showUnlockMessage = true
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                     showUnlockMessage = false
                 }
             }
@@ -470,7 +477,7 @@ struct InGameView: View {
     
     func exitToMainMenu() {
         BackgroundMusicPlayer.shared.stop()
-        BackgroundMusicPlayer.shared.play(filename: "mystery")
+        BackgroundMusicPlayer.shared.play(filename: "tensemusic")
         dismiss()  // 👈 This will actually pop InGameView
     }
     

@@ -7,20 +7,16 @@
 
 import Foundation
 import SceneKit
+import AVFoundation
 
 class SoundPlayer {
     static let shared = SoundPlayer()
     
     private var cachedSources: [String: SCNAudioSource] = [:]
-    
+    private var audioPlayer: AVAudioPlayer?
+
     private init() {}
 
-    /// Plays a sound effect on a given SCNNode.
-    /// - Parameters:
-    ///   - name: Name of the sound file (e.g., `"click.wav"`)
-    ///   - node: The `SCNNode` to attach the sound to
-    ///   - positional: Whether the sound should be positional (3D spatial audio)
-    ///   - volume: Volume of the sound (0.0 to 1.0)
     func playSound(named name: String, on node: SCNNode, positional: Bool = false, volume: Float = 1.0) {
         let audioSource: SCNAudioSource
 
@@ -45,4 +41,22 @@ class SoundPlayer {
         let player = SCNAudioPlayer(source: audioSource)
         node.addAudioPlayer(player)
     }
+
+    /// Plays a non-positional sound without requiring a SCNNode (for SwiftUI Views)
+    func playSoundUI(named name: String, volume: Float = 1.0) {
+        guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
+            print("❌ UI Sound: Failed to find sound: \(name)")
+            return
+        }
+
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.volume = volume
+            audioPlayer?.prepareToPlay()
+            audioPlayer?.play()
+        } catch {
+            print("❌ UI Sound: Failed to play sound \(name): \(error)")
+        }
+    }
 }
+

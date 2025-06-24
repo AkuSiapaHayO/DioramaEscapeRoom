@@ -98,8 +98,8 @@ struct MicroscopeView: View {
                             .cornerRadius(12)
                             .blur(radius: blurRadius)
                             .saturation(saturationAmount)
-                            .offset(x: isClueSelected ? 0 : -400)
-                            .animation(.easeOut(duration: 0.8), value: isClueSelected)
+//                            .offset(x: isClueSelected ? 0 : -400)
+//                            .animation(.easeOut(duration: 0.8), value: isClueSelected)
                     }
                 }
             }
