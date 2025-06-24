@@ -134,8 +134,24 @@ struct InGameView: View {
                                     SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
                                     return
                                 }
-                                
-                                // ✅ Item bisa diambil
+                                if nodeName == "Locker_2"{
+                                    if openedLockers.contains("Locker_2"){
+                                        if inventory.contains("UV_Flashlight"){
+                                            nodeName = "Clue_color"
+                                        } else if !inventory.contains("Clue_color"){
+                                            nodeName = "UV_Flashlight"
+                                        } else {
+                                            nodeName = "UV_Flashlight"
+                                        }
+                                    }
+                                }
+                                if nodeName == "Locker_3"{
+                                    if openedLockers.contains("Locker_3"){
+                                        if !inventory.contains("Golden_Key"){
+                                            nodeName = "Golden_Key"
+                                        }
+                                    }
+                                }
                                 if nodeName == "Clue_color" {
                                     SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 4.0)
                                     hasGottenClueColor = true
