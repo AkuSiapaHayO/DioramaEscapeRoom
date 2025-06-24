@@ -35,7 +35,7 @@ struct InGameView: View {
     
     @State private var showUnlockMessage: Bool = false
     @State private var unlockMessageText: String = ""
-
+    
     
     // Orbital camera properties
     @State private var orbitalRadius: Float = 3.0
@@ -120,38 +120,50 @@ struct InGameView: View {
                                 return
                             }
                             
-                            if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color" {
-                                if gameManager.currentState == .puzzle3_done {
-                                    if nodeName == "Clue_color" {
-                                        SoundPlayer.shared.playSoundUI(named: "paper.mp3", volume: 3.0 )
-                                        hasGottenClueColor = true
-                                    } else if nodeName == "UV_Flashlight" {
-                                        SoundPlayer.shared.playSoundUI(named: "paper.mp3", volume: 3.0 )
-                                    }
-                                    if !inventory.contains(nodeName) {
+                            let lockerForItem: [String: String] = [
+                                "Golden_Key": "Locker_3",
+                                "UV_Flashlight": "Locker_2",
+                                "Clue_color": "Locker_2",
+                                "Coffee_Cup": "Locker_1"
+                            ]
+                            
+                            if nodeName == "Golden_Key" || nodeName == "UV_Flashlight" || nodeName == "Clue_color"  {
+                                if let lockerName = lockerForItem[nodeName],
+                                   !openedLockers.contains(lockerName) {
+                                    print("🔒 \(nodeName) tidak bisa diambil karena \(lockerName) masih tertutup")
+                                    SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
+                                    return
+                                }
+                                
+                                // ✅ Item bisa diambil
+                                if nodeName == "Clue_color" {
+                                    SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 4.0)
+                                    hasGottenClueColor = true
+                                    if !inventory.contains(nodeName){
                                         inventory.append(nodeName)
                                     }
                                     
-                                    if let scene = scene, // unwrap the optional scene
-                                       let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            targetNode.isHidden = true
-                                        }
-                                    }
-                                    return
-                                }  else if gameManager.currentState == .puzzle4_done  {
-                                    SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 2.5)
-                                    if !inventory.contains(nodeName) {
+                                } else if nodeName == "UV_Flashlight" || nodeName == "Golden_Key" {
+                                    SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 3.0)
+                                    if !inventory.contains(nodeName){
                                         inventory.append(nodeName)
                                     }
-                                    if let scene = scene, // unwrap the optional scene
-                                       let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            targetNode.isHidden = true
-                                        }
+                                }
+                                
+                                if let scene = scene,
+                                   let targetNode = scene.rootNode.childNode(withName: nodeName, recursively: true) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        targetNode.isHidden = true
                                     }
-                                    return
-                                } else {
+                                }
+                                return
+                            }
+                            
+                            if nodeName == "Coffee_Cup" {
+                                if let lockerName = lockerForItem[nodeName],
+                                   !openedLockers.contains(lockerName) {
+                                    print("🔒 \(nodeName) tidak bisa diambil karena \(lockerName) masih tertutup")
+                                    SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
                                     return
                                 }
                             }
@@ -221,26 +233,26 @@ struct InGameView: View {
                                     rotateAction.timingMode = .easeInEaseOut
                                     targetNode.runAction(rotateAction)
                                     doorHasOpened = true
-
+                                    
                                     SoundPlayer.shared.playSound(named: "door.mp3", on: targetNode, volume: 0.7)
-
+                                    
                                     // Wait 3 seconds before showing the popup
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                         showGameCompletedPopup = true
                                     }
-
+                                    
                                     return
                                 } else {
                                     // 🔒 Door is still locked
                                     SoundPlayer.shared.playSound(named: "locked.mp3", on: targetNode, volume: 0.7)
                                     lockMessageText = "\(nodeName.replacingOccurrences(of: "_", with: " ")) is locked"
                                     showLockMessage = true
-
+                                    
                                     // Auto-dismiss after 2 seconds
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                                         showLockMessage = false
                                     }
-
+                                    
                                     return
                                 }
                             }
@@ -436,7 +448,7 @@ struct InGameView: View {
         }
         .onChange(of: gameManager.currentState) { newState in
             var message: String? = nil
-
+            
             switch newState {
             case .puzzle1_done:
                 message = "Locker 1 is unlocked"
@@ -451,11 +463,11 @@ struct InGameView: View {
             default:
                 break
             }
-
+            
             if let unlockMessage = message {
                 unlockMessageText = unlockMessage
                 showUnlockMessage = true
-
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                     showUnlockMessage = false
                 }
