@@ -26,7 +26,7 @@ struct FocusObjectView: View {
     @State private var isTurningKey = false
     
     @State private var passcodeInput: String = ""
-  
+    
     @EnvironmentObject var gameManager: GameManager
     var body: some View {
         ZStack {
@@ -108,13 +108,13 @@ struct FocusObjectView: View {
                 DragGesture()
                     .onChanged { value in
                         guard !["Flask_1", "Flask_2", "Flask_3", "Flask_4"].contains(nodeName) else { return }
-
+                        
                         let deltaX = Float(value.translation.width - lastDragTranslation.width)
                         let deltaY = Float(value.translation.height - lastDragTranslation.height)
-
+                        
                         rotationY -= deltaX * 0.01  // Horizontal swipe → Y-axis
                         rotationX -= deltaY * 0.01  // Vertical swipe → X-axis
-
+                        
                         lastDragTranslation = value.translation
                         updateTransform()
                     }
@@ -122,7 +122,7 @@ struct FocusObjectView: View {
                         lastDragTranslation = .zero
                     }
             )
-
+            
             .gesture(
                 MagnificationGesture()
                     .onChanged { value in
@@ -135,7 +135,7 @@ struct FocusObjectView: View {
                         lastScale = 1.0
                     }
             )
-
+            
             .onTapGesture {
                 switch nodeName {
                 case "Orange_Book":
@@ -418,6 +418,8 @@ struct FocusObjectView: View {
         rotationX = objectNode.eulerAngles.x
         rotationY = objectNode.eulerAngles.y
         rotationZ = objectNode.eulerAngles.z
+        
+        SoundPlayer.shared.playSound(named: "whoosh.mp3", on: scene.rootNode, volume: 0.7)
     }
     
     private func updateTransform() {
@@ -601,7 +603,7 @@ struct FocusObjectView: View {
         }
         
         SoundPlayer.shared.playSound(named: "keylock.mp3", on: keyholeNode, volume: 0.7)
-
+        
         let fullSequence = SCNAction.sequence([move, rotate, finishInsertion, dismissAction])
         fullSequence.timingMode = .easeInEaseOut
         clonedKey.runAction(fullSequence)

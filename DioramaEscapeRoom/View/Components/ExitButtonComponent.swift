@@ -58,6 +58,7 @@ struct ExitButtonComponent: View {
                         Button("Exit") {
                             withAnimation {
                                 BackgroundMusicPlayer.shared.stop()
+                                BackgroundMusicPlayer.shared.play(filename: "tensemusic")
                                 dismiss()
                             }
                         }

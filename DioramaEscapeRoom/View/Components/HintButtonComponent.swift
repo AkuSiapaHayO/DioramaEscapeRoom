@@ -84,6 +84,11 @@ struct HintButtonComponent: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ Ensures full expansion
         .ignoresSafeArea() // ✅ Needed at root level
         .animation(.easeInOut(duration: 0.3), value: showHint)
+        .onChange(of: showHint) { newValue in
+            if newValue {
+                SoundPlayer.shared.playSoundUI(named: "hint.mp3", volume: 1.0)
+            }
+        }
     }
 
     func hint(for state: GameProgressState?) -> String {

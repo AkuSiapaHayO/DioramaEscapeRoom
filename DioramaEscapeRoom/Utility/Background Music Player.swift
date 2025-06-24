@@ -34,7 +34,11 @@ class BackgroundMusicPlayer {
     }
     
     func stop() {
+        if audioPlayer?.isPlaying == true {
+            print("🛑 Stopping background music")
+        }
         audioPlayer?.stop()
+        audioPlayer = nil
     }
 
     func pause() {
