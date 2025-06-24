@@ -572,7 +572,7 @@ struct FocusObjectView: View {
         clonedKey.pivot = SCNMatrix4MakeTranslation(center.x, center.y, center.z)
         
         // Initial transform
-        clonedKey.scale = SCNVector3(1, 1, 1)
+        clonedKey.scale = SCNVector3(0.5, 0.5, 0.5)
         clonedKey.eulerAngles = SCNVector3(0, Float.pi, 0)
         
         // Start position: 5 units in front of keyhole
@@ -584,18 +584,8 @@ struct FocusObjectView: View {
         
         // 🔑 Animate move into keyhole, rotate, then rotate both key & keyhole
         let move = SCNAction.move(to: SCNVector3Zero, duration: 0.6)
-        let rotate = SCNAction.rotateBy(x: .pi, y: .pi / 2, z: 0, duration: 0.6)
+        let rotate = SCNAction.rotateBy(x: -.pi/2, y: -.pi+1/4 , z: .pi/2, duration: 0.6)
         
-        let finishInsertion = SCNAction.run { _ in
-            let rotate90 = SCNAction.rotateBy(x: 0, y: -CGFloat.pi / 2, z: 0, duration: 0.5)
-            rotate90.timingMode = .easeInEaseOut
-            
-            clonedKey.runAction(rotate90)
-            keyholeNode.runAction(rotate90)
-        }
-        
-        let sequence = SCNAction.sequence([move, rotate, finishInsertion])
-        sequence.timingMode = .easeInEaseOut
         let dismissAction = SCNAction.run { _ in
             print("🎬 Animation finished, dismissing view.")
             inventory.removeAll { $0 == "Golden_Key" }
@@ -604,13 +594,13 @@ struct FocusObjectView: View {
         
         SoundPlayer.shared.playSound(named: "keylock.mp3", on: keyholeNode, volume: 0.7)
         
-        let fullSequence = SCNAction.sequence([move, rotate, finishInsertion, dismissAction])
+        let fullSequence = SCNAction.sequence([move, rotate, dismissAction])
         fullSequence.timingMode = .easeInEaseOut
         clonedKey.runAction(fullSequence)
     }
 }
 
 #Preview {
-    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Lock_2", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
+    FocusObjectView(sceneFile: "Science Lab Updated.scn", nodeName: "Golden_Keyhole", inventory: .constant(["UV_Flashlight", "Golden_Key"]))
         .environmentObject(GameManager())
 }
