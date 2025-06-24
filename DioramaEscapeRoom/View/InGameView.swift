@@ -97,6 +97,10 @@ struct InGameView: View {
                                 nodeName = "Golden_Keyhole"
                             } else if(nodeName == "Orange_Book_Half_2" || nodeName == "Orange_Book_Half_1"){
                                 nodeName = "Orange_Book"
+                            } else if (nodeName == "Lock_Gagang"){
+                                nodeName = "Lock_2"
+                            } else if (nodeName == "Lock_Gagang_001"){
+                                nodeName = "Lock_1"
                             }
                             
                             if nodeName == "Paper_1" || nodeName == "Paper_2"  {
@@ -113,10 +117,10 @@ struct InGameView: View {
                             let RotatingObjectNames = ["Big_Plant_1", "Big_Plant_2", "Big_Plant_3", "Small_Plant_1", "Small_Plant_2", "Chair_Red", "Chair_Green", "Chair_Red_001", "Tubes_1"]
                             
                             let untappableObjectNames = [
-                                "Window","Floor", "Tiles", "Table_1", "Table_2", "Small_Table"
+                                "Window","Floor", "Tiles", "Table_1", "Table_2", "Short_Table_1"
                             ]
                             
-                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") || nodeName.contains("Copy") || nodeName.contains("Tube"){
+                            if untappableObjectNames.contains(nodeName) || nodeName.contains("Wall") || nodeName.contains("Vents") ||  nodeName.contains("Tube"){
                                 return
                             }
                             
@@ -153,14 +157,14 @@ struct InGameView: View {
                                     }
                                 }
                                 if nodeName == "Clue_color" {
-                                    SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 4.0)
+                                    SoundPlayer.shared.playSoundUI(named: "paper.mp3", volume: 2.0)
                                     hasGottenClueColor = true
                                     if !inventory.contains(nodeName){
                                         inventory.append(nodeName)
                                     }
                                     
                                 } else if nodeName == "UV_Flashlight" || nodeName == "Golden_Key" {
-                                    SoundPlayer.shared.playSound(named: "paper.mp3", on: targetNode, volume: 3.0)
+                                    SoundPlayer.shared.playSoundUI(named: "paper.mp3", volume: 2.0)
                                     if !inventory.contains(nodeName){
                                         inventory.append(nodeName)
                                     }
@@ -184,7 +188,7 @@ struct InGameView: View {
                                 }
                             }
                             
-                            if RotatingObjectNames.contains(nodeName) {
+                            if RotatingObjectNames.contains(nodeName)  || nodeName.contains("Copy") {
                                 let rotateAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 0.5)
                                 rotateAction.timingMode = .easeInEaseOut
                                 targetNode.runAction(rotateAction)

@@ -45,9 +45,19 @@ struct FocusObjectView: View {
                     }
                 }()
                 
-                guard let target = targetNode, let tappedName = target.name else { return }
+                guard let target = targetNode, var tappedName = target.name else { return }
                 
                 print("🖱️ Tapped node: \(tappedName)")
+                
+                if tappedName == "Hint_1"{
+                    tappedName = "Flask_1"
+                } else if tappedName == "Hint_2"{
+                    tappedName = "Flask_2"
+                } else if tappedName == "Hint_3"{
+                    tappedName = "Flask_3"
+                } else if tappedName == "Hint_4"{
+                    tappedName = "Flask_4"
+                }
                 
                 if tappedName.starts(with: "Numpad_") ||
                     tappedName.starts(with: "Key_") || tappedName.starts(with: "Codepad_") || tappedName.starts(with: "Num_"){
@@ -504,7 +514,7 @@ struct FocusObjectView: View {
     private var instructionText: String? {
         switch nodeName {
         case "Orange_Book":
-            return hasBookOpened ? "Tap to fold" : "Tap to unfold"
+            return hasBookOpened ? "" : "Tap to unfold"
         case "Flask_1", "Flask_2", "Flask_3", "Flask_4":
             return openedFlasks.contains(nodeName) ? "Tap to rotate back" : "Tap to rotate flask"
         case "Microscope_1", "Microscope_2", "Microscope_3":
