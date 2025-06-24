@@ -167,7 +167,7 @@ struct MicroscopeView: View {
 
             let objectNode = targetNode.clone()
             objectNode.position = SCNVector3Zero
-            objectNode.eulerAngles = SCNVector3(0, 0, Float.pi)
+            objectNode.eulerAngles = SCNVector3(x: 0, y: .pi/2, z: .pi)
 
             let (minVec, maxVec) = objectNode.boundingBox
             let size = SCNVector3(
